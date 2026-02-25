@@ -66,7 +66,7 @@ app.use(
             if (allowedOrigins.indexOf(normalizedOrigin) !== -1) {
                 callback(null, true);
             } else {
-                console.warn(`CORS blocked for origin: ${origin}`);
+                console.warn(`⚠️ CORS BLOCKED: Origin "${origin}" not in allowed list:`, allowedOrigins);
                 callback(new Error('Not allowed by CORS'));
             }
         },
@@ -135,8 +135,9 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // API rate limiting (IP-based for all, user-based for authenticated)
 app.use('/api', apiLimiter);
 
-// CSRF protection - generate token for all requests
-app.use('/api', createCSRFToken);
+// CSRF protection - Middleware to verify tokens
+// We removed createCSRFToken from here because it was regenerating on every request
+// and causing synchronization issues. We now fetch it explicitly.
 
 // CSRF verification for state-changing operations
 app.use('/api', (req, res, next) => {

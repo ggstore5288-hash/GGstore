@@ -1,16 +1,30 @@
 import axios from 'axios';
 
 const getBaseUrl = () => {
+    // 1. Check for manual override in environment
     const envUrl = import.meta.env.VITE_API_URL;
-    if (envUrl) {
-        // Remove trailing slash and ensure it ends with /api
+    if (envUrl && !envUrl.includes('localhost')) {
         const normalized = envUrl.replace(/\/$/, '');
         return normalized.endsWith('/api') ? normalized : `${normalized}/api`;
     }
-    return import.meta.env.PROD ? 'https://ggstore-zjau.onrender.com/api' : 'http://localhost:5000/api';
+
+    // 2. Check if we are running on a production domain (like Vercel)
+    const isProductionDomain = typeof window !== 'undefined' &&
+        window.location.hostname !== 'localhost' &&
+        window.location.hostname !== '127.0.0.1';
+
+    if (isProductionDomain || import.meta.env.PROD) {
+        return 'https://ggstore-zjau.onrender.com/api';
+    }
+
+    // 3. Fallback to localhost for development
+    return (envUrl || 'http://localhost:5000/api').replace(/\/$/, '');
 };
 
 const API_URL = getBaseUrl();
+if (typeof window !== 'undefined') {
+    console.log('📡 [API] Base URL:', API_URL);
+}
 
 // Create axios instance
 const client = axios.create({
@@ -49,11 +63,12 @@ const fetchCsrfToken = async () => {
             { withCredentials: true }
         );
 
-        // Try to get token from response header or cookie
+        // Try to get token from response header, response data, or cookie
         const tokenFromHeader = response.headers['x-csrf-token'];
+        const tokenFromData = response.data?.data?.token;
         const tokenFromCookie = getCsrfTokenFromCookie();
 
-        csrfToken = tokenFromHeader || tokenFromCookie;
+        csrfToken = tokenFromHeader || tokenFromData || tokenFromCookie;
         return csrfToken;
     } catch (error) {
         console.error('Failed to fetch CSRF token:', error);

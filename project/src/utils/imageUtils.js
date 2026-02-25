@@ -5,9 +5,20 @@ export const getImageUrl = (path) => {
     // If it's already a full URL, return it
     if (path.startsWith('http')) return path;
 
-    // Get backend URL (strip /api if present)
-    const rawUrl = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://ggstore-zjau.onrender.com/api' : 'http://localhost:5000/api');
-    const baseUrl = rawUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
+    // Get backend URL
+    const getBaseUrl = () => {
+        const envUrl = import.meta.env.VITE_API_URL;
+        // If we are in production (Vercel) or the env URL is explicitly production
+        const isProduction = (typeof window !== 'undefined' && window.location.hostname !== 'localhost') || import.meta.env.PROD;
+
+        const apiUrl = (isProduction && (!envUrl || !envUrl.includes('localhost')))
+            ? 'https://ggstore-zjau.onrender.com/api'
+            : (envUrl || 'http://localhost:5000/api');
+
+        return apiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
+    };
+
+    const baseUrl = getBaseUrl();
 
     // Clean path
     // Remove leading slash if present to avoid double slashes when joining

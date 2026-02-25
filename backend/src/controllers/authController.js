@@ -591,9 +591,15 @@ const revokeAllOtherSessions = async (req, res, next) => {
  * @access  Public
  */
 const getCsrfToken = async (req, res, next) => {
-    res.status(HTTP_STATUS.OK).json({
-        success: true,
-        message: 'CSRF token set'
+    // We rely on the middleware logic to set the token
+    const { createCSRFToken } = require('../middleware/csrfMiddleware');
+    createCSRFToken(req, res, () => {
+        const token = res.getHeader('X-CSRF-Token');
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'CSRF token set',
+            data: { token }
+        });
     });
 };
 
