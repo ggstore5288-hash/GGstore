@@ -43,6 +43,9 @@ const settingsRoutes = require('./routes/settingsRoutes');
 // Initialize Express app
 const app = express();
 
+// Trust proxy (required for Render/Vercel)
+app.set('trust proxy', 1);
+
 // CORS configuration - allow multiple origins
 const rawOrigins = [
     process.env.FRONTEND_URL || 'https://g-gstore.vercel.app',

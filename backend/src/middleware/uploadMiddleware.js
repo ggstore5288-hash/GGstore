@@ -7,7 +7,13 @@ const mongoose = require('mongoose');
 
 // Create GridFS storage engine
 const storage = new GridFsStorage({
-    db: mongoose.connection.asPromise().then(conn => conn.db),
+    // Wait for the mongoose connection to be established
+    db: mongoose.connection.asPromise().then(() => {
+        if (!mongoose.connection.db) {
+            throw new Error('Database connection established but db object is missing');
+        }
+        return mongoose.connection.db;
+    }),
     file: (req, file) => {
         return new Promise((resolve, reject) => {
             crypto.randomBytes(16, (err, buf) => {
@@ -81,9 +87,12 @@ const uploadFields = (fields) => {
 
 // Helper to construct image URL
 const getImageUrl = (req, filename) => {
-    // Construct absolute URL: http://localhost:5000/api/images/filename
-    const protocol = req.protocol;
+    // In production, we should try to use the public host
+    const protocol = req.protocol === 'http' && process.env.NODE_ENV === 'production' ? 'https' : req.protocol;
     const host = req.get('host');
+
+    // If we are on Render, the host might contain localhost internally
+    // though trust proxy should fix this.
     return `${protocol}://${host}/api/images/${filename}`;
 };
 
