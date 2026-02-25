@@ -16,8 +16,8 @@ const VerifyEmail = () => {
     const { isRTL } = useLanguage();
     const inputRefs = useRef([]);
 
-    // Get email from navigation state
-    const email = location.state?.email || '';
+    // Get email from navigation state OR sessionStorage fallback
+    const email = location.state?.email || sessionStorage.getItem('pendingVerifyEmail') || '';
 
     useEffect(() => {
         // Redirect if no email provided
@@ -84,6 +84,8 @@ const VerifyEmail = () => {
         setLoading(true);
         try {
             await verifyEmail(email, verificationCode);
+            // Clear the pending email from sessionStorage
+            sessionStorage.removeItem('pendingVerifyEmail');
             setSuccess(isRTL ? 'تم التحقق من البريد الإلكتروني بنجاح!' : 'Email verified successfully!');
             // Navigate to home after short delay
             setTimeout(() => navigate('/'), 1500);
@@ -117,7 +119,7 @@ const VerifyEmail = () => {
                 {isRTL ? 'تحقق من بريدك الإلكتروني' : 'Verify Your Email'}
             </h2>
             <p style={{ textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '14px', marginBottom: '20px' }}>
-                {isRTL 
+                {isRTL
                     ? `أرسلنا رمز تحقق مكون من 6 أرقام إلى ${email}`
                     : `We've sent a 6-digit verification code to ${email}`
                 }
@@ -125,11 +127,11 @@ const VerifyEmail = () => {
 
             {error && <div className="error-message">{error}</div>}
             {success && (
-                <div style={{ 
-                    background: 'rgba(0, 217, 255, 0.1)', 
-                    color: 'var(--color-cyan-primary)', 
-                    padding: '15px', 
-                    borderRadius: '4px', 
+                <div style={{
+                    background: 'rgba(0, 217, 255, 0.1)',
+                    color: 'var(--color-cyan-primary)',
+                    padding: '15px',
+                    borderRadius: '4px',
                     fontSize: '14px',
                     marginBottom: '20px',
                     borderLeft: '3px solid var(--color-cyan-primary)'
@@ -139,10 +141,10 @@ const VerifyEmail = () => {
             )}
 
             <form onSubmit={handleSubmit} className="auth-form">
-                <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'center', 
-                    gap: '10px', 
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: '10px',
                     marginBottom: '20px',
                     direction: 'ltr' // Always LTR for code input
                 }}>
@@ -201,9 +203,9 @@ const VerifyEmail = () => {
                         textDecoration: 'underline'
                     }}
                 >
-                    {resendLoading 
-                        ? (isRTL ? 'جاري الإرسال...' : 'Sending...') 
-                        : resendCooldown > 0 
+                    {resendLoading
+                        ? (isRTL ? 'جاري الإرسال...' : 'Sending...')
+                        : resendCooldown > 0
                             ? (isRTL ? `إعادة الإرسال بعد ${resendCooldown} ثانية` : `Resend in ${resendCooldown}s`)
                             : (isRTL ? 'إعادة إرسال الرمز' : 'Resend Code')
                     }

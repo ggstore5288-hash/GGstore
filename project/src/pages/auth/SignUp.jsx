@@ -34,6 +34,8 @@ const SignUp = () => {
         setLoading(true);
         try {
             const result = await signup(name, email, password, phone);
+            // Save email to sessionStorage as fallback in case location.state is lost
+            sessionStorage.setItem('pendingVerifyEmail', email);
             // Navigate to verification page with email
             navigate('/verify-email', { state: { email } });
         } catch (err) {
