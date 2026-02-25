@@ -1,5 +1,14 @@
 const rateLimit = require('express-rate-limit');
 
+// Get the real client IP, not the proxy IP
+const getRealIp = (req) => {
+    return (
+        req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+        req.headers['x-real-ip'] ||
+        req.ip
+    );
+};
+
 // In-memory store for user-based rate limiting (in production, use Redis)
 const userRateLimitStore = new Map();
 
@@ -68,7 +77,8 @@ const userRateLimiter = (windowMs, maxRequests, message) => {
  */
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
+    max: 300, // Raised to 300 - all users share the proxy IP on Render
+    keyGenerator: getRealIp,
     message: {
         success: false,
         message: 'Too many requests from this IP. Please wait 15 minutes before trying again.',
@@ -93,7 +103,8 @@ const userApiLimiter = userRateLimiter(
  */
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 50, // Limit each IP to 50 requests per windowMs
+    max: 200, // Raised to 200 - all users share the proxy IP on Render
+    keyGenerator: getRealIp,
     message: {
         success: false,
         message: 'Too many authentication attempts. Please wait 15 minutes and try again.',
