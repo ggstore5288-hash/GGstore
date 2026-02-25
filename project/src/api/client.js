@@ -1,6 +1,16 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://ggstore-zjau.onrender.com/api' : 'http://localhost:5000/api');
+const getBaseUrl = () => {
+    const envUrl = import.meta.env.VITE_API_URL;
+    if (envUrl) {
+        // Remove trailing slash and ensure it ends with /api
+        const normalized = envUrl.replace(/\/$/, '');
+        return normalized.endsWith('/api') ? normalized : `${normalized}/api`;
+    }
+    return import.meta.env.PROD ? 'https://ggstore-zjau.onrender.com/api' : 'http://localhost:5000/api';
+};
+
+const API_URL = getBaseUrl();
 
 // Create axios instance
 const client = axios.create({
