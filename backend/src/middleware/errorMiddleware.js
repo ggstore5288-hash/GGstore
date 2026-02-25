@@ -69,6 +69,13 @@ const errorHandler = (err, req, res, next) => {
         error = new AppError(message, HTTP_STATUS.UNAUTHORIZED);
     }
 
+    // Ensure CORS headers are present even on errors
+    const origin = req.headers.origin;
+    if (origin) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
+
     // Send error response
     res.status(error.statusCode).json({
         success: false,

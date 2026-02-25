@@ -7,14 +7,18 @@ export const getImageUrl = (path) => {
 
     // Get backend URL
     const getBaseUrl = () => {
+        // 1. Check if we are in a browser environment
+        const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+        const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '';
+
+        // 2. If NOT local, always use production backend (ignore misconfigured .env)
+        if (!isLocal) {
+            return 'https://ggstore-zjau.onrender.com';
+        }
+
+        // 3. Fallback to env or localhost for development
         const envUrl = import.meta.env.VITE_API_URL;
-        // If we are in production (Vercel) or the env URL is explicitly production
-        const isProduction = (typeof window !== 'undefined' && window.location.hostname !== 'localhost') || import.meta.env.PROD;
-
-        const apiUrl = (isProduction && (!envUrl || !envUrl.includes('localhost')))
-            ? 'https://ggstore-zjau.onrender.com/api'
-            : (envUrl || 'http://localhost:5000/api');
-
+        const apiUrl = envUrl || 'http://localhost:5000/api';
         return apiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
     };
 

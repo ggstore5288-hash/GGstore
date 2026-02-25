@@ -60,10 +60,13 @@ app.use(
             // Allow requests with no origin (like mobile apps or curl requests)
             if (!origin) return callback(null, true);
 
-            // Normalize incoming origin for comparison (though browsers usually don't include trailing slash)
+            // Normalize incoming origin for comparison
             const normalizedOrigin = origin.replace(/\/$/, '');
 
-            if (allowedOrigins.indexOf(normalizedOrigin) !== -1) {
+            const isVercel = normalizedOrigin.endsWith('.vercel.app');
+            const isAllowed = allowedOrigins.indexOf(normalizedOrigin) !== -1;
+
+            if (isVercel || isAllowed) {
                 callback(null, true);
             } else {
                 console.warn(`⚠️ CORS BLOCKED: Origin "${origin}" not in allowed list:`, allowedOrigins);

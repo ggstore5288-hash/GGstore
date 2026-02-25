@@ -1,29 +1,27 @@
 import axios from 'axios';
 
 const getBaseUrl = () => {
-    // 1. Check for manual override in environment
-    const envUrl = import.meta.env.VITE_API_URL;
-    if (envUrl && !envUrl.includes('localhost')) {
-        const normalized = envUrl.replace(/\/$/, '');
-        return normalized.endsWith('/api') ? normalized : `${normalized}/api`;
-    }
+    // 1. Check if we are in a browser environment
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '';
 
-    // 2. Check if we are running on a production domain (like Vercel)
-    const isProductionDomain = typeof window !== 'undefined' &&
-        window.location.hostname !== 'localhost' &&
-        window.location.hostname !== '127.0.0.1';
-
-    if (isProductionDomain || import.meta.env.PROD) {
+    // 2. If NOT local, always use production backend (ignore misconfigured .env)
+    if (!isLocal) {
         return 'https://ggstore-zjau.onrender.com/api';
     }
 
-    // 3. Fallback to localhost for development
-    return (envUrl || 'http://localhost:5000/api').replace(/\/$/, '');
+    // 3. If local, use environment variable or default
+    const envUrl = import.meta.env.VITE_API_URL;
+    if (envUrl) {
+        return envUrl.replace(/\/$/, '');
+    }
+
+    return 'http://localhost:5000/api';
 };
 
 const API_URL = getBaseUrl();
 if (typeof window !== 'undefined') {
-    console.log('📡 [API] Base URL:', API_URL);
+    console.log('📡 [API] Active Backend:', API_URL);
 }
 
 // Create axios instance
