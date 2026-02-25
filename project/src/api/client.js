@@ -1,8 +1,10 @@
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://ggstore-zjau.onrender.com/api' : 'http://localhost:5000/api');
+
 // Create axios instance
 const client = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+    baseURL: API_URL,
     headers: {
         'Content-Type': 'application/json'
     },
@@ -33,7 +35,7 @@ const getCsrfTokenFromCookie = () => {
 const fetchCsrfToken = async () => {
     try {
         const response = await axios.get(
-            `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/csrf-token`,
+            `${API_URL}/auth/csrf-token`,
             { withCredentials: true }
         );
 

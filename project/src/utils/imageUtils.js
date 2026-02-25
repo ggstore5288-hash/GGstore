@@ -6,7 +6,7 @@ export const getImageUrl = (path) => {
     if (path.startsWith('http')) return path;
 
     // Get backend URL (strip /api if present)
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://ggstore-zjau.onrender.com/api' : 'http://localhost:5000/api');
     const baseUrl = apiUrl.replace('/api', '');
 
     // Clean path
