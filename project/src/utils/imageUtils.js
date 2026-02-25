@@ -24,15 +24,21 @@ export const getImageUrl = (path) => {
 
     const baseUrl = getBaseUrl();
 
+    // Sanitize path: Remove hardcoded localhost references if they exist
+    // (Happens if database contains absolute paths pointing to dev environment)
+    let sanitizedPath = path;
+    if (sanitizedPath.includes('localhost:5000')) {
+        sanitizedPath = sanitizedPath.replace(/http:\/\/localhost:5000\/?(api\/)?/, '');
+    }
+
     // Clean path
     // Remove leading slash if present to avoid double slashes when joining
-    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+    const cleanPath = sanitizedPath.startsWith('/') ? sanitizedPath.slice(1) : sanitizedPath;
 
     // Ensure path uses forward slashes
     const normalizedPath = cleanPath.replace(/\\/g, '/');
 
     // If it's a GridFS image (just a filename) and doesn't have the prefix, add it
-    // GridFS images are served via /api/images/
     if (!normalizedPath.startsWith('uploads/') && !normalizedPath.startsWith('api/')) {
         return `${baseUrl}/api/images/${normalizedPath}`;
     }

@@ -3,9 +3,11 @@ const { GridFsStorage } = require('multer-gridfs-storage');
 const crypto = require('crypto');
 const path = require('path');
 
+const mongoose = require('mongoose');
+
 // Create GridFS storage engine
 const storage = new GridFsStorage({
-    url: process.env.MONGO_URI,
+    db: mongoose.connection.asPromise().then(conn => conn.db),
     file: (req, file) => {
         return new Promise((resolve, reject) => {
             crypto.randomBytes(16, (err, buf) => {
@@ -21,6 +23,15 @@ const storage = new GridFsStorage({
             });
         });
     }
+});
+
+// Event listener for storage connection
+storage.on('connection', () => {
+    console.log('✅ GridFS Storage connected');
+});
+
+storage.on('connectionFailed', (err) => {
+    console.error('❌ GridFS Storage connection failed:', err.message);
 });
 
 // File filter (same as before)
