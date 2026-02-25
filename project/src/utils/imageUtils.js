@@ -1,33 +1,30 @@
 export const getImageUrl = (path) => {
     if (!path) return 'https://placehold.co/300x400?text=No+Image';
 
-    // Get environment detection
+    // Detect if we're running locally
     const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
     const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '';
 
-    // Sanitize path: Remove hardcoded localhost or IP references if they exist
-    let sanitizedPath = path;
-    if (typeof sanitizedPath === 'string' && !isLocal) {
-        // More aggressive regex to catch ANY localhost or 127.0.0.1 variation
-        // and force it to be a relative path
-        sanitizedPath = sanitizedPath.replace(/^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?\/?(api\/)?(images\/)?/, '');
+    const PRODUCTION_BASE = 'https://ggstore-zjau.onrender.com';
 
-        // Also catch if it's just a raw path starting with /api/images or /uploads
-        sanitizedPath = sanitizedPath.replace(/^\/?(api\/)?(images\/)?/, '');
-        sanitizedPath = sanitizedPath.replace(/^\/?(uploads\/)?/, '');
+    // --- If it's an absolute URL ---
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+        // If it's a localhost URL and we're in production, extract just the filename and rewrite it
+        if (!isLocal && (path.includes('localhost') || path.includes('127.0.0.1'))) {
+            // Extract just the filename from the path
+            const parts = path.split('/');
+            const filename = parts[parts.length - 1];
+            return `${PRODUCTION_BASE}/api/images/${filename}`;
+        }
+        // Otherwise it's already a correct absolute URL
+        return path;
     }
 
-    // If it's already a full URL (that survived sanitization), return it
-    if (sanitizedPath.startsWith('http')) return sanitizedPath;
-
-    // Get backend URL
+    // --- If it's a relative path ---
     const getBaseUrl = () => {
-        // 1. If NOT local, always use production backend (ignore misconfigured .env)
         if (!isLocal) {
-            return 'https://ggstore-zjau.onrender.com';
+            return PRODUCTION_BASE;
         }
-
-        // 2. Fallback to env or localhost for development
         const envUrl = import.meta.env.VITE_API_URL;
         const apiUrl = envUrl || 'http://localhost:5000/api';
         return apiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
@@ -35,17 +32,24 @@ export const getImageUrl = (path) => {
 
     const baseUrl = getBaseUrl();
 
-    // Clean path
-    // Remove leading slash if present to avoid double slashes when joining
-    const cleanPath = sanitizedPath.startsWith('/') ? sanitizedPath.slice(1) : sanitizedPath;
+    // Clean path - strip any leading /api/images/ or /uploads/ prefix
+    let cleanPath = path
+        .replace(/^\/?(api\/images\/)/, '')
+        .replace(/^\/?(uploads\/)/, '')
+        .replace(/^\//, '');
 
-    // Ensure path uses forward slashes
-    const normalizedPath = cleanPath.replace(/\\/g, '/');
+    // Normalize slashes
+    cleanPath = cleanPath.replace(/\\/g, '/');
 
-    // If it's a GridFS image (just a filename) and doesn't have the prefix, add it
-    if (!normalizedPath.startsWith('uploads/') && !normalizedPath.startsWith('api/')) {
-        return `${baseUrl}/api/images/${normalizedPath}`;
+    // If it's a raw filename with no path prefix, serve it via /api/images/
+    if (!cleanPath.includes('/')) {
+        return `${baseUrl}/api/images/${cleanPath}`;
     }
 
-    return `${baseUrl}/${normalizedPath}`;
+    // If it starts with uploads/ serve it as a static file
+    if (cleanPath.startsWith('uploads/')) {
+        return `${baseUrl}/${cleanPath}`;
+    }
+
+    return `${baseUrl}/api/images/${cleanPath}`;
 };
