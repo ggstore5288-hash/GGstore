@@ -80,7 +80,8 @@ app.use(helmet({
 const allowedOrigins = [
     process.env.FRONTEND_URL || 'http://localhost:3000',
     'http://localhost:5173', // Vite default
-    'http://localhost:3000'
+    'http://localhost:3000',
+    'https://ggstore-zjau.onrender.com' // Frontend deployment on Render
 ];
 
 app.use(
