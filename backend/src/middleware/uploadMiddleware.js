@@ -8,11 +8,16 @@ const mongoose = require('mongoose');
 // Create GridFS storage engine
 const storage = new GridFsStorage({
     // Wait for the mongoose connection to be established
-    db: mongoose.connection.asPromise().then(() => {
-        if (!mongoose.connection.db) {
-            throw new Error('Database connection established but db object is missing');
+    db: new Promise((resolve, reject) => {
+        if (mongoose.connection.readyState === 1) {
+            return resolve(mongoose.connection.db);
         }
-        return mongoose.connection.db;
+        mongoose.connection.once('connected', () => {
+            resolve(mongoose.connection.db);
+        });
+        mongoose.connection.on('error', (err) => {
+            reject(err);
+        });
     }),
     file: (req, file) => {
         return new Promise((resolve, reject) => {

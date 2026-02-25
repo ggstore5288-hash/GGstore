@@ -8,16 +8,13 @@ export const getImageUrl = (path) => {
     // Sanitize path: Remove hardcoded localhost or IP references if they exist
     let sanitizedPath = path;
     if (typeof sanitizedPath === 'string' && !isLocal) {
-        // Remove any http://localhost:5000, http://127.0.0.1:5000, etc.
-        sanitizedPath = sanitizedPath.replace(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?(api\/)?/, '');
+        // More aggressive regex to catch ANY localhost or 127.0.0.1 variation
+        // and force it to be a relative path
+        sanitizedPath = sanitizedPath.replace(/^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?\/?(api\/)?(images\/)?/, '');
 
-        // Also catch cases where the URL might be just a partial string like /api/images/...
-        // or /uploads/...
-        if (sanitizedPath.startsWith('api/images/')) {
-            sanitizedPath = sanitizedPath.replace('api/images/', '');
-        } else if (sanitizedPath.startsWith('/api/images/')) {
-            sanitizedPath = sanitizedPath.replace('/api/images/', '');
-        }
+        // Also catch if it's just a raw path starting with /api/images or /uploads
+        sanitizedPath = sanitizedPath.replace(/^\/?(api\/)?(images\/)?/, '');
+        sanitizedPath = sanitizedPath.replace(/^\/?(uploads\/)?/, '');
     }
 
     // If it's already a full URL (that survived sanitization), return it

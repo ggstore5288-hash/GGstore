@@ -75,7 +75,8 @@ const verifyCSRFToken = (req, res, next) => {
     }
 
     // Optional: Verify IP address matches
-    if (tokenData.ip !== req.ip) {
+    // Note: Disabled in production to prevent mismatch errors behind proxies
+    if (process.env.NODE_ENV !== 'production' && tokenData.ip !== req.ip) {
         return next(
             new AppError('CSRF token IP mismatch', HTTP_STATUS.FORBIDDEN)
         );
