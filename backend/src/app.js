@@ -71,7 +71,8 @@ app.use(
             }
         },
         credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        exposedHeaders: ['X-CSRF-Token']
     })
 );
 

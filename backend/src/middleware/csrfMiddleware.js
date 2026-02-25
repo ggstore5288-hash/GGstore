@@ -28,10 +28,11 @@ const createCSRFToken = (req, res, next) => {
     res.setHeader('X-CSRF-Token', token);
 
     // Also set in cookie for easier access
+    const isProduction = process.env.NODE_ENV === 'production';
     res.cookie('csrf-token', token, {
         httpOnly: false, // Must be accessible to JavaScript
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-domain production
         maxAge: 15 * 60 * 1000 // 15 minutes
     });
 
