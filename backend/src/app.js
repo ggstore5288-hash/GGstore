@@ -57,30 +57,31 @@ const rawOrigins = [
 // Normalize origins by removing trailing slashes
 const allowedOrigins = rawOrigins.map(origin => origin.replace(/\/$/, ''));
 
+// CORS configuration options
+const corsOptions = {
+    origin: function (origin, callback) {
+        if (!origin) return callback(null, true);
+        const normalizedOrigin = origin.replace(/\/$/, '');
+        if (normalizedOrigin.includes('vercel.app') || normalizedOrigin.includes('onrender.com') || allowedOrigins.includes(normalizedOrigin)) {
+            callback(null, true);
+        } else {
+            callback(null, false);
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-Requested-With', 'Accept', 'Origin'],
+    exposedHeaders: ['X-CSRF-Token']
+};
+
 // 1. CORS MUST BE FIRST to handle preflights
-app.use(
-    cors({
-        origin: function (origin, callback) {
-            if (!origin) return callback(null, true);
-            const normalizedOrigin = origin.replace(/\/$/, '');
-            if (normalizedOrigin.includes('vercel.app') || normalizedOrigin.includes('onrender.com') || allowedOrigins.includes(normalizedOrigin)) {
-                callback(null, true);
-            } else {
-                callback(null, false);
-            }
-        },
-        credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-Requested-With'],
-        exposedHeaders: ['X-CSRF-Token']
-    })
-);
+app.use(cors(corsOptions));
 
 // 2. Cookie parser should be high for CSRF/Auth
 app.use(cookieParser());
 
-// 3. Explicit OPTIONS handler as a fallback
-app.options('*', cors());
+// 3. Explicit OPTIONS handler as a fallback (using the SAME cors options)
+app.options('*', cors(corsOptions));
 
 // Security middleware - Enhanced security headers
 app.use(helmet({
