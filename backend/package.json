@@ -1,0 +1,55 @@
+{
+  "name": "gaming-ecommerce-backend",
+  "version": "1.0.0",
+  "description": "Production-ready backend for digital gaming and subscription e-commerce platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "create-admin": "node src/scripts/createAdmin.js",
+    "format": "prettier --write \"src/**/*.{js,json}\"",
+    "format:check": "prettier --check \"src/**/*.{js,json}\"",
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "*.{js,json}": [
+      "prettier --write"
+    ]
+  },
+  "keywords": [
+    "ecommerce",
+    "gaming",
+    "subscription",
+    "nodejs",
+    "express",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.13.5",
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.7.4",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.1",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.1.0",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.21.1",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "multer-gridfs-storage": "^5.0.2",
+    "nodemailer": "^6.9.8",
+    "sharp": "^0.33.5",
+    "uuid": "^11.0.3",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "husky": "^9.0.11",
+    "nodemon": "^3.0.3"
+  }
+}
