@@ -95,7 +95,12 @@ const sendVerificationEmail = async (email, name, code) => {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    // Wrap sendMail in a promise with a 5-second timeout
+    await Promise.race([
+      transporter.sendMail(mailOptions),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Email sending timed out after 5 seconds')), 5000))
+    ]);
+
     logger.info('Verification email sent', { email });
 
     await queueEmail({
@@ -214,7 +219,10 @@ const sendOrderConfirmationEmail = async (email, name, order) => {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    await Promise.race([
+      transporter.sendMail(mailOptions),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Email sending timed out after 5 seconds')), 5000))
+    ]);
     logger.info('Order confirmation email sent', { email });
 
     await queueEmail({
@@ -299,7 +307,10 @@ const sendPaymentConfirmationEmail = async (email, name, order) => {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    await Promise.race([
+      transporter.sendMail(mailOptions),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Email sending timed out after 5 seconds')), 5000))
+    ]);
     logger.info('Payment confirmation email sent', { email });
 
     await queueEmail({
@@ -373,7 +384,10 @@ const sendPasswordResetCodeEmail = async (email, name, code) => {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    await Promise.race([
+      transporter.sendMail(mailOptions),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Email sending timed out after 5 seconds')), 5000))
+    ]);
     logger.info('Password reset email sent', { email });
 
     await queueEmail({
