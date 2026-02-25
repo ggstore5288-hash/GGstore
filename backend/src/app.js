@@ -44,21 +44,29 @@ const settingsRoutes = require('./routes/settingsRoutes');
 const app = express();
 
 // CORS configuration - allow multiple origins
-const allowedOrigins = [
+const rawOrigins = [
     process.env.FRONTEND_URL || 'https://g-gstore.vercel.app',
     'http://localhost:5173', // Vite default
     'http://localhost:3000',
     'https://ggstore-zjau.onrender.com' // Frontend deployment on Render
 ];
 
+// Normalize origins by removing trailing slashes
+const allowedOrigins = rawOrigins.map(origin => origin.replace(/\/$/, ''));
+
 app.use(
     cors({
         origin: function (origin, callback) {
             // Allow requests with no origin (like mobile apps or curl requests)
             if (!origin) return callback(null, true);
-            if (allowedOrigins.indexOf(origin) !== -1) {
+
+            // Normalize incoming origin for comparison (though browsers usually don't include trailing slash)
+            const normalizedOrigin = origin.replace(/\/$/, '');
+
+            if (allowedOrigins.indexOf(normalizedOrigin) !== -1) {
                 callback(null, true);
             } else {
+                console.warn(`CORS blocked for origin: ${origin}`);
                 callback(new Error('Not allowed by CORS'));
             }
         },
