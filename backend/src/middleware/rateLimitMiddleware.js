@@ -75,7 +75,8 @@ const apiLimiter = rateLimit({
         error: 'Too many requests from this IP. Please wait 15 minutes before trying again.'
     },
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    skip: (req) => req.method === 'OPTIONS'
 });
 
 /**
@@ -100,6 +101,7 @@ const authLimiter = rateLimit({
     },
     standardHeaders: true,
     legacyHeaders: false,
+    skip: (req) => req.method === 'OPTIONS',
     skipSuccessfulRequests: true
 });
 
@@ -115,7 +117,8 @@ const uploadLimiter = rateLimit({
         error: 'Too many file uploads. Please wait a while before trying again.'
     },
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    skip: (req) => req.method === 'OPTIONS'
 });
 
 /**

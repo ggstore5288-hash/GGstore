@@ -54,30 +54,30 @@ const rawOrigins = [
 // Normalize origins by removing trailing slashes
 const allowedOrigins = rawOrigins.map(origin => origin.replace(/\/$/, ''));
 
+// 1. CORS MUST BE FIRST to handle preflights
 app.use(
     cors({
         origin: function (origin, callback) {
-            // Allow requests with no origin (like mobile apps or curl requests)
             if (!origin) return callback(null, true);
-
-            // Normalize incoming origin for comparison
             const normalizedOrigin = origin.replace(/\/$/, '');
-
-            const isVercel = normalizedOrigin.endsWith('.vercel.app');
-            const isAllowed = allowedOrigins.indexOf(normalizedOrigin) !== -1;
-
-            if (isVercel || isAllowed) {
+            if (normalizedOrigin.includes('vercel.app') || normalizedOrigin.includes('onrender.com') || allowedOrigins.includes(normalizedOrigin)) {
                 callback(null, true);
             } else {
-                console.warn(`⚠️ CORS BLOCKED: Origin "${origin}" not in allowed list:`, allowedOrigins);
-                callback(new Error('Not allowed by CORS'));
+                callback(null, false);
             }
         },
         credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-Requested-With'],
         exposedHeaders: ['X-CSRF-Token']
     })
 );
+
+// 2. Cookie parser should be high for CSRF/Auth
+app.use(cookieParser());
+
+// 3. Explicit OPTIONS handler as a fallback
+app.options('*', cors());
 
 // Security middleware - Enhanced security headers
 app.use(helmet({
@@ -114,9 +114,6 @@ app.use(helmet({
 
 // Compression middleware
 app.use(compression());
-
-// Cookie parser middleware (for refresh tokens)
-app.use(cookieParser());
 
 // Body parser middleware
 app.use(express.json());
