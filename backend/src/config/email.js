@@ -7,14 +7,18 @@ const createTransporter = () => {
     // Check if using Gmail
     if (process.env.EMAIL_SERVICE === 'gmail') {
         return nodemailer.createTransport({
-            service: 'gmail',
+            host: 'smtp.gmail.com',
+            port: 465,
+            secure: true,
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASSWORD
             },
             tls: {
                 rejectUnauthorized: false
-            }
+            },
+            // Force IPv4 because Render's IPv6 can timeout when reaching Gmail
+            family: 4
         });
     }
 
