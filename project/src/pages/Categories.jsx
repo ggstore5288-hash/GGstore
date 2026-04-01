@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { getImageUrl } from '../utils/imageUtils';
+import SmartImage from '../components/SmartImage';
 
 const Categories = () => {
     const { categories, fetchCategories } = useProducts();
@@ -73,7 +74,14 @@ const Categories = () => {
             <div className="categories-grid">
                 {categories.map(cat => (
                     <Link to={`/games?category=${cat._id}`} key={cat._id} className="category-card">
-                        {cat.image && <img src={getImageUrl(cat.image)} alt={cat.name} className="category-bg" loading="eager" decoding="async" />}
+                        {cat.image && (
+                            <SmartImage 
+                                src={getImageUrl(cat.image)} 
+                                alt={cat.name} 
+                                className="category-bg" 
+                                loading="eager" 
+                            />
+                        )}
                         <span className="category-name">{cat.name}</span>
                     </Link>
                 ))}
