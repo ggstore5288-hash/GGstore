@@ -14,12 +14,6 @@ const Hero = () => {
     const heroLabel = getSetting('marketing.hero_label');
     const heroButtonText = getSetting('marketing.hero_button_text');
 
-    const displayImage = heroImage || "/images/banner.webp";
-    const displayTitle = heroTitle || "Grand Theft Auto VI";
-    const displaySubtitle = heroSubtitle || "Coming 2025";
-    const displayLink = heroLink || "#";
-    const displayLabel = heroLabel || "Featured Game";
-    const displayButtonText = heroButtonText || (heroLink ? "View Details" : "Coming Soon");
 
     return (
         <section className="hero">
