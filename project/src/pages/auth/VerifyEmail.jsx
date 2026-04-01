@@ -118,11 +118,14 @@ const VerifyEmail = () => {
             <h2 style={{ textAlign: 'center', marginBottom: '20px', color: '#fff' }}>
                 {isRTL ? 'تحقق من بريدك الإلكتروني' : 'Verify Your Email'}
             </h2>
-            <p style={{ textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '14px', marginBottom: '20px' }}>
+            <p style={{ textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '14px', marginBottom: '8px' }}>
                 {isRTL
                     ? `أرسلنا رمز تحقق مكون من 6 أرقام إلى ${email}`
                     : `We've sent a 6-digit verification code to ${email}`
                 }
+            </p>
+            <p style={{ textAlign: 'center', color: 'var(--color-cyan-primary)', fontSize: '13px', marginBottom: '20px', fontWeight: '500' }}>
+                {isRTL ? 'يرجى التحقق من مجلد البريد العشوائي (Spam) إذا لم تجده.' : 'If you don\'t see the email, please check your spam/junk folder.'}
             </p>
 
             {error && <div className="error-message">{error}</div>}

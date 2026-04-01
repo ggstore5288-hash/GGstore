@@ -70,7 +70,7 @@ const auditLogSchema = new mongoose.Schema(
 auditLogSchema.index({ user: 1, createdAt: -1 });
 auditLogSchema.index({ action: 1, createdAt: -1 });
 auditLogSchema.index({ resource: 1, createdAt: -1 });
-auditLogSchema.index({ createdAt: -1 }); // For sorting by date
+auditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 }); // Auto-prune after 30 days
 auditLogSchema.index({ user: 1, resource: 1, createdAt: -1 }); // Compound index
 
 module.exports = mongoose.model('AuditLog', auditLogSchema);

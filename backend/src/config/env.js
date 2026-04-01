@@ -1,146 +1,83 @@
-const Joi = require('joi');
-
 /**
- * Environment variable validation schema
+ * Environment variable validation configuration
  */
-const envSchema = Joi.object({
-    // Server Configuration
-    NODE_ENV: Joi.string()
-        .valid('development', 'production', 'test')
-        .default('development'),
-    PORT: Joi.number()
-        .integer()
-        .min(1)
-        .max(65535)
-        .default(5000),
+const REQUIRED_VARS = [
+    'MONGO_URI',
+    'JWT_SECRET',
+    'EMAIL_FROM'
+];
 
-    // MongoDB Configuration
-    MONGO_URI: Joi.string()
-        .required()
-        .messages({
-            'any.required': 'MONGO_URI is required',
-            'string.empty': 'MONGO_URI cannot be empty'
-        }),
-
-    // JWT Configuration
-    JWT_SECRET: Joi.string()
-        .min(32)
-        .required()
-        .messages({
-            'any.required': 'JWT_SECRET is required',
-            'string.min': 'JWT_SECRET must be at least 32 characters long for security'
-        }),
-    JWT_EXPIRE: Joi.string()
-        .default('15m'),
-
-    // Email Configuration
-    EMAIL_SERVICE: Joi.string()
-        .optional(),
-    EMAIL_USER: Joi.string()
-        .email()
-        .when('EMAIL_SERVICE', {
-            is: Joi.exist(),
-            then: Joi.required(),
-            otherwise: Joi.optional()
-        }),
-    EMAIL_PASSWORD: Joi.string()
-        .when('EMAIL_SERVICE', {
-            is: Joi.exist(),
-            then: Joi.required(),
-            otherwise: Joi.optional()
-        }),
-    SMTP_HOST: Joi.string()
-        .when('EMAIL_SERVICE', {
-            is: Joi.string().valid('custom'),
-            then: Joi.required(),
-            otherwise: Joi.optional()
-        }),
-    SMTP_PORT: Joi.number()
-        .integer()
-        .min(1)
-        .max(65535)
-        .when('EMAIL_SERVICE', {
-            is: Joi.string().valid('custom'),
-            then: Joi.required(),
-            otherwise: Joi.optional()
-        }),
-    SMTP_USER: Joi.string()
-        .when('EMAIL_SERVICE', {
-            is: Joi.string().valid('custom'),
-            then: Joi.required(),
-            otherwise: Joi.optional()
-        }),
-    SMTP_PASSWORD: Joi.string()
-        .when('EMAIL_SERVICE', {
-            is: Joi.string().valid('custom'),
-            then: Joi.required(),
-            otherwise: Joi.optional()
-        }),
-    EMAIL_FROM: Joi.string()
-        .email()
-        .required()
-        .messages({
-            'any.required': 'EMAIL_FROM is required'
-        }),
-    EMAIL_FROM_NAME: Joi.string()
-        .default('Gaming Store'),
-
-    // Admin Configuration
-    ADMIN_EMAIL: Joi.string()
-        .email()
-        .optional(),
-    ADMIN_PASSWORD: Joi.string()
-        .min(8)
-        .optional(),
-    ADMIN_NAME: Joi.string()
-        .optional(),
-    ADMIN_PHONE: Joi.string()
-        .optional(),
-
-    // Frontend Configuration
-    FRONTEND_URL: Joi.string()
-        .uri()
-        .default('http://localhost:3000'),
-
-    // File Upload Configuration
-    MAX_FILE_SIZE: Joi.number()
-        .integer()
-        .min(1024) // 1KB minimum
-        .default(5242880), // 5MB default
-    UPLOAD_PATH: Joi.string()
-        .default('./uploads')
-}).unknown(true); // Allow system environment variables
+const DEFAULT_CONFIG = {
+    NODE_ENV: 'development',
+    PORT: 5000,
+    JWT_EXPIRE: '15m',
+    EMAIL_FROM_NAME: 'Gaming Store',
+    FRONTEND_URL: 'http://localhost:3000',
+    MAX_FILE_SIZE: 5242880, // 5MB
+    UPLOAD_PATH: './uploads'
+};
 
 /**
- * Validate environment variables
+ * Validate environment variables manually to remove dependency on 'joi'
  */
 const validateEnv = () => {
-    const { error, value } = envSchema.validate(process.env, {
-        abortEarly: false, // Collect all errors
-        stripUnknown: true // Remove unknown variables
+    const missing = [];
+    const config = { ...DEFAULT_CONFIG };
+
+    // Set variables from process.env
+    Object.keys(process.env).forEach(key => {
+        config[key] = process.env[key];
     });
 
-    if (error) {
-        const errorMessages = error.details.map(detail => {
-            return `  - ${detail.path.join('.')}: ${detail.message}`;
-        }).join('\n');
+    // Check required variables
+    REQUIRED_VARS.forEach(key => {
+        if (!process.env[key]) {
+            missing.push(key);
+        }
+    });
 
+    if (missing.length > 0) {
         console.error('❌ Environment variable validation failed:\n');
-        console.error(errorMessages);
+        missing.forEach(key => console.error(`  - ${key}: is required but missing`));
         console.error('\nPlease check your .env file and ensure all required variables are set correctly.\n');
         process.exit(1);
     }
 
+    // Additional type/logic checks
+    if (config.PORT) config.PORT = parseInt(config.PORT, 10);
+    if (config.MAX_FILE_SIZE) config.MAX_FILE_SIZE = parseInt(config.MAX_FILE_SIZE, 10);
+
+    if (isNaN(config.PORT)) {
+        console.error('❌ PORT must be a number');
+        process.exit(1);
+    }
+
+    if (config.JWT_SECRET && config.JWT_SECRET.length < 32 && config.NODE_ENV === 'production') {
+        process.emitWarning('JWT_SECRET should be at least 32 characters long for security in production.');
+    }
+
+    // SMTP specific checks if EMAIL_SERVICE is provided
+    if (config.EMAIL_SERVICE === 'custom') {
+        const smtpRequired = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASSWORD'];
+        smtpRequired.forEach(key => {
+            if (!process.env[key]) {
+                console.error(`❌ ${key} is required when EMAIL_SERVICE is 'custom'`);
+                process.exit(1);
+            }
+        });
+    }
+
     // Log validated configuration (without sensitive data)
     console.log('✅ Environment variables validated successfully');
-    console.log(`   NODE_ENV: ${value.NODE_ENV}`);
-    console.log(`   PORT: ${value.PORT}`);
-    console.log(`   MONGO_URI: ${value.MONGO_URI ? '✓ Set' : '✗ Missing'}`);
-    console.log(`   JWT_SECRET: ${value.JWT_SECRET ? '✓ Set' : '✗ Missing'}`);
-    console.log(`   EMAIL_FROM: ${value.EMAIL_FROM || '✗ Missing'}`);
-    console.log(`   FRONTEND_URL: ${value.FRONTEND_URL}`);
+    console.log(`   NODE_ENV: ${config.NODE_ENV}`);
+    console.log(`   PORT: ${config.PORT}`);
+    console.log(`   MONGO_URI: ${config.MONGO_URI ? '✓ Set' : '✗ Missing'}`);
+    console.log(`   JWT_SECRET: ${config.JWT_SECRET ? '✓ Set' : '✗ Missing'}`);
+    console.log(`   EMAIL_FROM: ${config.EMAIL_FROM || '✗ Missing'}`);
+    console.log(`   FRONTEND_URL: ${config.FRONTEND_URL}`);
 
-    return value;
+    return config;
 };
 
 module.exports = validateEnv;
+

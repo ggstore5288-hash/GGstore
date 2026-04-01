@@ -1,6 +1,5 @@
 const AuditLog = require('../models/AuditLog');
 const logger = require('../utils/logger');
-const axios = require('axios');
 
 /**
  * Audit middleware to log admin actions
@@ -53,7 +52,7 @@ const logAdminAction = async (req, res, responseData) => {
             changes: req.method !== 'GET' ? getChanges(req, responseData) : null,
             status: res.statusCode >= 200 && res.statusCode < 300 ? 'success' : 'failure',
             errorMessage: responseData?.error || null,
-            location: await getLocationData(req.ip)
+            location: { city: 'Local', country: 'System', countryCode: 'SYS' }
         };
 
         await AuditLog.create(auditData);
@@ -62,38 +61,7 @@ const logAdminAction = async (req, res, responseData) => {
     }
 };
 
-/**
- * Fetch location data from IP
- */
-const getLocationData = async (ip) => {
-    try {
-        // Skip for localhost
-        if (ip === '::1' || ip === '127.0.0.1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
-            return {
-                city: 'Localhost',
-                country: 'Internal Network',
-                countryCode: 'LH'
-            };
-        }
 
-        const response = await axios.get(`http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,city,lat,lon,timezone,isp`);
-
-        if (response.data && response.data.status === 'success') {
-            return {
-                city: response.data.city,
-                country: response.data.country,
-                countryCode: response.data.countryCode,
-                lat: response.data.lat,
-                lon: response.data.lon,
-                timezone: response.data.timezone,
-                isp: response.data.isp
-            };
-        }
-        return null;
-    } catch (error) {
-        return null;
-    }
-};
 
 /**
  * Determine action from route

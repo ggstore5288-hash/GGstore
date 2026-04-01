@@ -90,18 +90,26 @@ const sendVerificationEmail = async (email, name, code) => {
   const mailOptions = {
     from: `${process.env.EMAIL_FROM_NAME} <${process.env.EMAIL_FROM}>`,
     to: email,
+    replyTo: process.env.EMAIL_FROM, // Helps avoid being seen as spoofed
+    headers: {
+      'X-Entity-Ref-ID': Date.now().toString() // Helps some providers track related emails
+    },
     subject,
     html
   };
 
   try {
     // Wrap sendMail in a promise with a 5-second timeout
-    await Promise.race([
+    const info = await Promise.race([
       transporter.sendMail(mailOptions),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Email sending timed out after 5 seconds')), 5000))
     ]);
 
-    logger.info('Verification email sent', { email });
+    logger.info('Verification email sent successfully', { 
+      to: email, 
+      messageId: info.messageId,
+      response: info.response 
+    });
 
     await queueEmail({
       to: email,
@@ -112,7 +120,14 @@ const sendVerificationEmail = async (email, name, code) => {
       sentAt: new Date()
     });
   } catch (error) {
-    logger.error('Failed to send verification email directly, queuing', { email, error: error.message });
+    logger.error('CRITICAL: Failed to send verification email directly', { 
+      email, 
+      error: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response,
+      stack: error.stack
+    });
     await queueEmail({
       to: email,
       subject: mailOptions.subject,

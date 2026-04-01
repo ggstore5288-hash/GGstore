@@ -1,5 +1,10 @@
 const mongoose = require('mongoose');
 const logger = require('../utils/logger');
+const dns = require('dns');
+
+// Force use of Google DNS to fix 'querySrv ECONNREFUSED' issues
+dns.setServers(['8.8.8.8', '8.8.4.4']);
+
 
 /**
  * Connect to MongoDB
@@ -12,8 +17,7 @@ const connectDB = async () => {
         // Connection options
         const options = {
             serverSelectionTimeoutMS: 10000,
-            socketTimeoutMS: 45000,
-            useUnifiedTopology: true
+            socketTimeoutMS: 45000
         };
 
         logger.info('Attempting MongoDB connection...');

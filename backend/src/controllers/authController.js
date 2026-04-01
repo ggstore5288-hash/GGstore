@@ -26,7 +26,8 @@ const signup = async (req, res, next) => {
             name,
             email,
             password,
-            phone
+            phone,
+            expireAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours to verify
         });
 
         // Generate verification code
@@ -84,7 +85,7 @@ const login = async (req, res, next) => {
             await user.incrementFailedAttempts();
             // Monitor for brute-force: record global spike + per-account lock alerts
             recordFailedAttempt(req.ip, email);
-            if (user.failedLoginAttempts >= 5) {
+            if (user.failedLoginAttempts >= 10) {
                 recordAccountLocked(email, req.ip);
             }
             return next(new AppError('Incorrect password. Please try again.', HTTP_STATUS.UNAUTHORIZED));
@@ -173,10 +174,10 @@ const verifyEmail = async (req, res, next) => {
             return next(new AppError('Verification code has expired', HTTP_STATUS.BAD_REQUEST));
         }
 
-        // Verify email
         user.isEmailVerified = true;
         user.verificationCode = undefined;
         user.verificationCodeExpires = undefined;
+        user.expireAt = undefined; // Remove TTL index once verified
         await user.save();
 
         // Generate tokens
@@ -248,6 +249,7 @@ const resendVerificationCode = async (req, res, next) => {
 
         // Generate new verification code
         const verificationCode = user.generateVerificationCode();
+        user.expireAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // Give another 24 hours on resend
         await user.save();
 
         // Send verification email

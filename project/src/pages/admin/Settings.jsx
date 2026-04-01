@@ -40,7 +40,7 @@ const Settings = () => {
         { key: 'marketing.promo_code', value: 'WELCOME10', category: 'Sales', description: 'Active sitewide promo code' },
         { key: 'marketing.hero_title', value: 'Grand Theft Auto VI', category: 'Marketing', description: 'Title of the hero featured game' },
         { key: 'marketing.hero_subtitle', value: 'Coming 2025', category: 'Marketing', description: 'Subtitle of the hero featured game' },
-        { key: 'marketing.hero_image', value: '/images/banner.png', category: 'Marketing', description: 'Background image URL for the hero section' },
+        { key: 'marketing.hero_image', value: '/images/banner.webp', category: 'Marketing', description: 'Background image URL for the hero section' },
         { key: 'marketing.hero_link', value: '#', category: 'Marketing', description: 'Link URL for the hero section View Details button' },
         { key: 'marketing.hero_label', value: 'Featured Game', category: 'Marketing', description: 'Small label text above the hero title' },
         { key: 'marketing.hero_button_text', value: 'Coming Soon', category: 'Marketing', description: 'Text for the hero CTA button' }

@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
-const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 
@@ -126,12 +125,16 @@ app.use(express.urlencoded({ extended: true }));
 // Request logging middleware (with request IDs)
 app.use(requestLogger);
 
-// Morgan logging (keep for compatibility, but structured logging is primary)
-if (process.env.NODE_ENV === 'development') {
-    app.use(morgan('dev'));
-} else {
-    app.use(morgan('combined'));
-}
+// Request logging middleware
+app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        const logger = require('./utils/logger');
+        logger.request(req, res, duration);
+    });
+    next();
+});
 
 // Serve static files (uploads)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

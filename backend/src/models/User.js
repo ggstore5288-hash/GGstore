@@ -74,6 +74,11 @@ const userSchema = new mongoose.Schema(
             type: [String],
             select: false,
             default: []
+        },
+        expireAt: {
+            type: Date,
+            index: { expires: 0 }, // TTL index: document expires at this date
+            select: false
         }
     },
     {
@@ -152,8 +157,8 @@ userSchema.methods.isAccountLocked = function () {
 userSchema.methods.incrementFailedAttempts = async function () {
     this.failedLoginAttempts += 1;
 
-    // Lock account after 5 failed attempts for 30 minutes
-    if (this.failedLoginAttempts >= 5) {
+    // Lock account after 10 failed attempts for 30 minutes
+    if (this.failedLoginAttempts >= 10) {
         this.accountLockedUntil = Date.now() + 30 * 60 * 1000; // 30 minutes
     }
 

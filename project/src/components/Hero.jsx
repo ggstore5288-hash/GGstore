@@ -14,7 +14,7 @@ const Hero = () => {
     const heroLabel = getSetting('marketing.hero_label');
     const heroButtonText = getSetting('marketing.hero_button_text');
 
-    const displayImage = heroImage || "/images/banner.png";
+    const displayImage = heroImage || "/images/banner.webp";
     const displayTitle = heroTitle || "Grand Theft Auto VI";
     const displaySubtitle = heroSubtitle || "Coming 2025";
     const displayLink = heroLink || "#";
@@ -214,23 +214,7 @@ const Hero = () => {
                         className="hero-banner-image"
                     />
                     <div className="hero-overlay"></div>
-                    <div className="hero-content">
-                        <div className="hero-text">
-                            <div className="hero-label">{displayLabel}</div>
-                            <h1 className="hero-title">
-                                {displayTitle}
-                            </h1>
-                            <p className="hero-subtitle">
-                                {displaySubtitle}
-                            </p>
-                        </div>
-                        <a
-                            href={displayLink}
-                            className="hero-cta"
-                        >
-                            {displayButtonText}
-                        </a>
-                    </div>
+
                 </div>
             </div>
         </section>
