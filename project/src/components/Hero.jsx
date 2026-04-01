@@ -9,10 +9,6 @@ const Hero = () => {
     // Fetch values from settings context, defaulting to GTA V fallback
     const heroImage = getSetting('marketing.hero_image');
     const heroTitle = getSetting('marketing.hero_title');
-    const heroSubtitle = getSetting('marketing.hero_subtitle');
-    const heroLink = getSetting('marketing.hero_link');
-    const heroLabel = getSetting('marketing.hero_label');
-    const heroButtonText = getSetting('marketing.hero_button_text');
 
 
     return (
@@ -203,8 +199,8 @@ const Hero = () => {
             <div className="hero-container">
                 <div className="hero-banner-wrapper">
                     <img
-                        src={displayImage}
-                        alt={displayTitle}
+                        src={heroImage || "/images/banner.webp"}
+                        alt={heroTitle || "Featured Game"}
                         className="hero-banner-image"
                     />
                 </div>
