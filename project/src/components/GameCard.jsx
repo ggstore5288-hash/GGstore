@@ -103,9 +103,10 @@ const GameCard = ({ product }) => {
 
                 .card-image-container {
                     position: relative;
-                    padding-top: 133%; /* 3:4 Aspect Ratio */
+                    aspect-ratio: 3/4;
                     overflow: hidden;
-                    background: #05050a;
+                    background: #0d0e14;
+                    width: 100%;
                 }
 
                 .card-image {
@@ -247,10 +248,10 @@ const GameCard = ({ product }) => {
                 }
 
                 .original-price {
-                    font-size: clamp(9px, 1.1vw, 11px);
+                    font-size: 11px;
                     color: var(--color-text-muted);
                     text-decoration: line-through;
-                    margin-bottom: -2px;
+                    opacity: 0.6;
                 }
 
                 .current-price {
