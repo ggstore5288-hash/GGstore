@@ -10,7 +10,6 @@ import { ProductProvider } from './context/ProductContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { SettingsProvider, useSettings } from './context/SettingsContext';
 import { useProducts } from './context/ProductContext';
-import InitialLoader from './components/InitialLoader';
 
 // Layouts (always needed, keep static)
 import AuthLayout from './layouts/AuthLayout';
@@ -122,69 +121,67 @@ const AppContent = () => {
     const isReady = !loadingSettings && !loadingAuth && !loadingProducts;
 
     return (
-        <InitialLoader ready={isReady}>
-            <Suspense fallback={<PageLoader />}>
-                <Routes>
-                    {/* Auth Routes */}
-                    <Route element={<AuthLayout />}>
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/signup" element={<SignUp />} />
-                        <Route path="/verify-email" element={<VerifyEmail />} />
-                        <Route path="/forgot-password" element={<ForgotPassword />} />
-                    </Route>
+        <Suspense fallback={<PageLoader />}>
+            <Routes>
+                {/* Auth Routes */}
+                <Route element={<AuthLayout />}>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<SignUp />} />
+                    <Route path="/verify-email" element={<VerifyEmail />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                </Route>
 
-                    {/* Admin Routes — entire admin bundle only loads for admins */}
-                    <Route path="/admin" element={
-                        <ProtectedRoute requireAdmin>
-                            <AdminLayout />
-                        </ProtectedRoute>
-                    }>
-                        <Route index element={<Dashboard />} />
-                        <Route path="products" element={<Products />} />
-                        <Route path="categories" element={<AdminCategories />} />
-                        <Route path="orders" element={<Orders />} />
-                        <Route path="users" element={<Users />} />
-                        <Route path="analytics" element={<Analytics />} />
-                        <Route path="payments" element={<Payments />} />
-                        <Route path="promo-codes" element={<PromoCodes />} />
-                        <Route path="flash-sales" element={<FlashSales />} />
-                        <Route path="loyalty" element={<Loyalty />} />
-                        <Route path="reviews" element={<Reviews />} />
-                        <Route path="content" element={<Content />} />
-                        <Route path="newsletter" element={<AdminNewsletter />} />
-                        <Route path="email-queue" element={<EmailQueue />} />
-                        <Route path="email-templates" element={<EmailTemplates />} />
-                        <Route path="audit-logs" element={<AuditLogs />} />
-                        <Route path="settings" element={<Settings />} />
-                        <Route path="payment-methods" element={<PaymentMethods />} />
-                        <Route path="chatbot" element={<AdminChatBot />} />
-                    </Route>
+                {/* Admin Routes — entire admin bundle only loads for admins */}
+                <Route path="/admin" element={
+                    <ProtectedRoute requireAdmin>
+                        <AdminLayout />
+                    </ProtectedRoute>
+                }>
+                    <Route index element={<Dashboard />} />
+                    <Route path="products" element={<Products />} />
+                    <Route path="categories" element={<AdminCategories />} />
+                    <Route path="orders" element={<Orders />} />
+                    <Route path="users" element={<Users />} />
+                    <Route path="analytics" element={<Analytics />} />
+                    <Route path="payments" element={<Payments />} />
+                    <Route path="promo-codes" element={<PromoCodes />} />
+                    <Route path="flash-sales" element={<FlashSales />} />
+                    <Route path="loyalty" element={<Loyalty />} />
+                    <Route path="reviews" element={<Reviews />} />
+                    <Route path="content" element={<Content />} />
+                    <Route path="newsletter" element={<AdminNewsletter />} />
+                    <Route path="email-queue" element={<EmailQueue />} />
+                    <Route path="email-templates" element={<EmailTemplates />} />
+                    <Route path="audit-logs" element={<AuditLogs />} />
+                    <Route path="settings" element={<Settings />} />
+                    <Route path="payment-methods" element={<PaymentMethods />} />
+                    <Route path="chatbot" element={<AdminChatBot />} />
+                </Route>
 
-                    {/* Public Routes */}
-                    <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
-                    <Route path="/games" element={<PublicLayout><Games /></PublicLayout>} />
-                    <Route path="/categories" element={<PublicLayout><Categories /></PublicLayout>} />
-                    <Route path="/product/:id" element={<PublicLayout><ProductDetails /></PublicLayout>} />
-                    <Route path="/cart" element={<PublicLayout><Cart /></PublicLayout>} />
-                    <Route path="/checkout" element={
-                        <PublicLayout>
-                            <ProtectedRoute><Checkout /></ProtectedRoute>
-                        </PublicLayout>
-                    } />
-                    <Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
-                    <Route path="/privacy-policy" element={<PublicLayout><PrivacyPolicy /></PublicLayout>} />
-                    <Route path="/newsletter" element={<PublicLayout><Newsletter /></PublicLayout>} />
-                    <Route path="/profile" element={
-                        <PublicLayout>
-                            <ProtectedRoute><Profile /></ProtectedRoute>
-                        </PublicLayout>
-                    } />
+                {/* Public Routes */}
+                <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
+                <Route path="/games" element={<PublicLayout><Games /></PublicLayout>} />
+                <Route path="/categories" element={<PublicLayout><Categories /></PublicLayout>} />
+                <Route path="/product/:id" element={<PublicLayout><ProductDetails /></PublicLayout>} />
+                <Route path="/cart" element={<PublicLayout><Cart /></PublicLayout>} />
+                <Route path="/checkout" element={
+                    <PublicLayout>
+                        <ProtectedRoute><Checkout /></ProtectedRoute>
+                    </PublicLayout>
+                } />
+                <Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
+                <Route path="/privacy-policy" element={<PublicLayout><PrivacyPolicy /></PublicLayout>} />
+                <Route path="/newsletter" element={<PublicLayout><Newsletter /></PublicLayout>} />
+                <Route path="/profile" element={
+                    <PublicLayout>
+                        <ProtectedRoute><Profile /></ProtectedRoute>
+                    </PublicLayout>
+                } />
 
-                    {/* Fallback */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-            </Suspense>
-        </InitialLoader>
+                {/* Fallback */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+        </Suspense>
     );
 };
 

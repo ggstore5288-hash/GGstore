@@ -8,7 +8,7 @@ import { getImageUrl } from '../utils/imageUtils';
 import client from '../api/client';
 import SmartImage from './SmartImage';
 
-const GameCard = ({ product }) => {
+const GameCard = ({ product, priority }) => {
     const { addToCart } = useCart();
     const { isAuthenticated } = useAuth();
     const { addToast } = useToast();
@@ -298,7 +298,8 @@ const GameCard = ({ product }) => {
                     src={image} 
                     alt={product.name} 
                     className="card-image" 
-                    loading="lazy"
+                    loading={priority ? "eager" : "lazy"}
+                    fetchpriority={priority ? "high" : "auto"}
                 />
 
                 <div className="card-badges">

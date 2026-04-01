@@ -68,8 +68,12 @@ const GameGrid = ({ products, loading }) => {
                 }
             `}</style>
 
-            {products.map(product => (
-                <GameCard key={product._id} product={product} />
+            {products.map((product, index) => (
+                <GameCard 
+                    key={product._id} 
+                    product={product} 
+                    priority={index < 4} // First row gets high priority
+                />
             ))}
         </div>
     );

@@ -52,9 +52,8 @@ const SmartImage = ({
                     height: '100%',
                     objectFit: 'cover',
                     display: 'block',
-                    opacity: isLoaded ? 1 : 0,
-                    transition: 'opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                    willChange: 'opacity'
+                    opacity: 1, // Show immediately
+                    willChange: 'auto'
                 }}
                 {...props}
             />
