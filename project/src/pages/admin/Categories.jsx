@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import adminAPI from '../../api/admin';
-import { Folder, Plus, Edit2, Trash2, Search, Upload, X, Check, AlertCircle, Loader2, Image as ImageIcon, Eye, EyeOff } from 'lucide-react';
+import { Folder, Plus, Edit2, Trash2, Search, Upload, X, Check, AlertCircle, Loader2, Image as ImageIcon, Eye, EyeOff, Wand2 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import { getImageUrl } from '../../utils/imageUtils';
+import { convertToDirectLink } from '../../utils/driveUtils';
 
 const Categories = () => {
     const [categories, setCategories] = useState([]);
@@ -14,7 +15,8 @@ const Categories = () => {
     const [formData, setFormData] = useState({
         name: '',
         description: '',
-        image: null
+        image: null,
+        imageUrl: ''
     });
     const [previewImage, setPreviewImage] = useState(null);
     const { addToast } = useToast();
@@ -43,9 +45,16 @@ const Categories = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setFormData({ ...formData, image: file });
+            setFormData({ ...formData, image: file, imageUrl: '' });
             setPreviewImage(URL.createObjectURL(file));
         }
+    };
+
+    const handleMagicConvert = () => {
+        if (!formData.imageUrl) return;
+        const converted = convertToDirectLink(formData.imageUrl);
+        setFormData({ ...formData, imageUrl: converted, image: null });
+        setPreviewImage(converted);
     };
 
     const handleSubmit = async (e) => {
@@ -60,8 +69,11 @@ const Categories = () => {
             const data = new FormData();
             data.append('name', formData.name);
             data.append('description', formData.description);
+            
             if (formData.image instanceof File) {
                 data.append('image', formData.image);
+            } else if (formData.imageUrl) {
+                data.append('imageUrl', formData.imageUrl);
             }
 
             if (editingCategory) {
@@ -102,12 +114,9 @@ const Categories = () => {
     const handleToggleStatus = async (id) => {
         try {
             setActionLoading(true);
-            // Assuming adminAPI has toggleCategoryStatus, otherwise we'd need to add it
-            // For now let's use a patch if it exists or fallback
             if (adminAPI.toggleCategoryStatus) {
                 await adminAPI.toggleCategoryStatus(id);
             } else {
-                // Fallback: get category, toggle offline, update
                 const cat = categories.find(c => c._id === id);
                 const data = new FormData();
                 data.append('isActive', !cat.isActive);
@@ -124,7 +133,7 @@ const Categories = () => {
     };
 
     const resetForm = () => {
-        setFormData({ name: '', description: '', image: null });
+        setFormData({ name: '', description: '', image: null, imageUrl: '' });
         setPreviewImage(null);
         setEditingCategory(null);
     };
@@ -134,7 +143,8 @@ const Categories = () => {
         setFormData({
             name: category.name,
             description: category.description || '',
-            image: category.image
+            image: null,
+            imageUrl: category.image || ''
         });
         setPreviewImage(category.image ? getImageUrl(category.image) : null);
         setIsModalOpen(true);
@@ -146,7 +156,6 @@ const Categories = () => {
 
     return (
         <div className="categories-page animate-fade-in">
-            {/* Header section with glassmorphism */}
             <div className="admin-header-v2">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
                     <div style={{ minWidth: '250px' }}>
@@ -162,7 +171,6 @@ const Categories = () => {
                     </button>
                 </div>
 
-                {/* Search area */}
                 <div className="search-container-v2">
                     <Search size={18} className="search-icon-v2" />
                     <input
@@ -175,7 +183,6 @@ const Categories = () => {
                 </div>
             </div>
 
-            {/* Main Content Area */}
             <div className="content-container-v2">
                 <div className="stats-row-v2">
                     <div className="stat-card-v2">
@@ -272,7 +279,6 @@ const Categories = () => {
                 )}
             </div>
 
-            {/* Premium Modal Overhaul */}
             {isModalOpen && (
                 <div className="modal-overlay-v2">
                     <div className="modal-content-v2 scale-in">
@@ -317,8 +323,48 @@ const Categories = () => {
                                     />
                                 </div>
 
+                                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <div className="form-field-v2">
+                                        <label style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            Direct Image URL
+                                            <span style={{ fontSize: '10px', opacity: 0.5 }}>Pro Performance</span>
+                                        </label>
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <input
+                                                className="form-input"
+                                                value={formData.imageUrl}
+                                                onChange={e => setFormData({ ...formData, imageUrl: e.target.value, image: null })}
+                                                placeholder="Google Drive, Dropbox, or any direct link..."
+                                                style={{ marginBottom: 0, paddingLeft: '16px' }}
+                                            />
+                                            <button 
+                                                type="button" 
+                                                onClick={handleMagicConvert}
+                                                style={{ 
+                                                    background: 'rgba(0, 217, 255, 0.1)', 
+                                                    border: '1px solid rgba(0, 217, 255, 0.2)',
+                                                    color: '#00d9ff',
+                                                    width: '46px',
+                                                    height: '46px',
+                                                    borderRadius: '12px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    cursor: 'pointer'
+                                                }}
+                                                title="Magic Convert (Drive/Dropbox)"
+                                            >
+                                                <Wand2 size={20} />
+                                            </button>
+                                        </div>
+                                        <p style={{ fontSize: '10px', marginTop: '6px', color: '#64748b' }}>
+                                            Tip: Paste a Google Drive link and click the wand to make it ultra-fast.
+                                        </p>
+                                    </div>
+                                </div>
+
                                 <div className="form-field-v2">
-                                    <label>Category Visual</label>
+                                    <label>Or Upload Manually {!formData.imageUrl && '*'}</label>
                                     <div className="image-upload-v2">
                                         <input
                                             type="file"
@@ -326,14 +372,15 @@ const Categories = () => {
                                             accept="image/*"
                                             onChange={handleFileChange}
                                             className="hidden-input"
+                                            required={!editingCategory && !formData.imageUrl}
                                         />
                                         <label htmlFor="category-image" className="upload-dropzone-v2">
                                             {previewImage ? (
                                                 <div className="preview-container-v2">
-                                                    <img src={previewImage} alt="Preview" />
+                                                    <img src={previewImage} alt="Preview" onError={(e) => { e.target.src = 'https://placehold.co/400x200/1a212c/64748b?text=Preview+Error'; }} />
                                                     <div className="preview-overlay-v2">
                                                         <Upload size={24} />
-                                                        <span>Change Image</span>
+                                                        <span>Replace Media</span>
                                                     </div>
                                                 </div>
                                             ) : (
@@ -341,8 +388,8 @@ const Categories = () => {
                                                     <div className="icon-circle-v2">
                                                         <ImageIcon size={32} />
                                                     </div>
-                                                    <p className="primary-text">Click to upload image</p>
-                                                    <p className="secondary-text">PNG, JPG or WebP (Max 5MB)</p>
+                                                    <p className="primary-text">Select local file</p>
+                                                    <p className="secondary-text">Full priority given to URL if both present</p>
                                                 </div>
                                             )}
                                         </label>
@@ -367,7 +414,7 @@ const Categories = () => {
                                     {actionLoading ? (
                                         <>
                                             <Loader2 className="animate-spin" size={18} />
-                                            <span>Saving...</span>
+                                            <span>Processing...</span>
                                         </>
                                     ) : (
                                         <>
@@ -394,25 +441,19 @@ const Categories = () => {
                 .animate-fade-in { animation: fadeIn 0.4s ease-out; }
                 .scale-in { animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
 
-                    @keyframes fadeIn {
-                        from { opacity: 0; transform: translateY(10px); }
-                        to { opacity: 1; transform: translateY(0); }
-                    }
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
 
-                    @media (max-width: 768px) {
-                        .stats-row-v2 {
-                            flex-direction: column;
-                        }
-                        .admin-header-v2 {
-                            padding: 20px;
-                        }
-                        .page-title-v2 {
-                            font-size: 24px;
-                        }
-                    }
-@keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+                @media (max-width: 768px) {
+                    .stats-row-v2 { flex-direction: column; }
+                    .admin-header-v2 { padding: 20px; }
+                    .page-title-v2 { font-size: 24px; }
+                }
 
-                /* Header Layout */
+                @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
                 .admin-header-v2 {
                     background: rgba(15, 23, 42, 0.6);
                     backdrop-filter: blur(12px);
@@ -440,7 +481,6 @@ const Categories = () => {
                     margin: 4px 0 0 0;
                 }
 
-                /* Buttons */
                 .btn-primary-v2 {
                     display: flex;
                     align-items: center;
@@ -497,7 +537,6 @@ const Categories = () => {
                     color: #fff;
                 }
 
-                /* Search */
                 .search-container-v2 {
                     margin-top: 24px;
                     position: relative;
@@ -530,13 +569,7 @@ const Categories = () => {
                     background: rgba(2, 6, 23, 0.8);
                 }
 
-                /* Stats Tokens */
-                .stats-row-v2 {
-                    display: flex;
-                    gap: 16px;
-                    margin-bottom: 24px;
-                }
-
+                .stats-row-v2 { display: flex; gap: 16px; margin-bottom: 24px; }
                 .stat-card-v2 {
                     display: flex;
                     align-items: center;
@@ -552,7 +585,6 @@ const Categories = () => {
                 .stat-label-v2 { color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
                 .stat-value-v2 { display: block; font-size: 20px; font-weight: 700; color: #fff; }
 
-                /* Table Styling */
                 .category-table-container-v2 {
                     background: rgba(15, 23, 42, 0.6);
                     border: 1px solid rgba(255, 255, 255, 0.05);
@@ -561,11 +593,7 @@ const Categories = () => {
                     box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.5);
                 }
 
-                .admin-table-v2 {
-                    width: 100%;
-                    border-collapse: collapse;
-                }
-
+                .admin-table-v2 { width: 100%; border-collapse: collapse; }
                 .admin-table-v2 th {
                     text-align: left;
                     padding: 16px 24px;
@@ -583,10 +611,7 @@ const Categories = () => {
                     border-bottom: 1px solid rgba(255, 255, 255, 0.03);
                 }
 
-                .table-row-v2:hover {
-                    background: rgba(255, 255, 255, 0.02);
-                }
-
+                .table-row-v2:hover { background: rgba(255, 255, 255, 0.02); }
                 .table-row-v2 td { padding: 20px 24px; }
 
                 .category-avatar-v2 {
@@ -599,7 +624,6 @@ const Categories = () => {
                 }
 
                 .category-avatar-v2 img { width: 100%; height: 100%; object-fit: cover; }
-
                 .name-v2 { display: block; color: #fff; font-weight: 600; font-size: 16px; }
                 .desc-v2 { color: #94a3b8; font-size: 13px; line-height: 1.4; max-width: 400px; }
 
@@ -636,7 +660,6 @@ const Categories = () => {
                 .action-btn-v2:hover { background: rgba(255, 255, 255, 0.1); color: #fff; transform: translateY(-2px); }
                 .action-btn-v2.danger:hover { background: #ef4444; color: #fff; border-color: #ef4444; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
 
-                /* Modal Styling */
                 .modal-overlay-v2 {
                     position: fixed;
                     inset: 0;
@@ -707,7 +730,6 @@ const Categories = () => {
                 .form-field-v2 input { padding-left: 48px; }
                 .form-field-v2 input:focus, .form-field-v2 textarea:focus { border-color: #00d9ff; box-shadow: 0 0 0 4px rgba(0, 217, 255, 0.05); }
 
-                /* Image Upload v2 */
                 .image-upload-v2 .hidden-input { display: none; }
                 .upload-dropzone-v2 {
                     display: block;
@@ -763,17 +785,11 @@ const Categories = () => {
 
                 .preview-container-v2:hover .preview-overlay-v2 { opacity: 1; }
 
-                .modal-footer-v2 {
-                    padding: 0 32px 32px;
-                    display: flex;
-                    justify-content: flex-end;
-                    gap: 12px;
-                }
+                .modal-footer-v2 { padding: 0 32px 32px; display: flex; justify-content: flex-end; gap: 12px; }
 
                 .animate-spin { animation: spin 1s linear infinite; }
                 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-                /* Loading/Empty states */
                 .loading-state-v2, .empty-state-v2 {
                     padding: 100px 0;
                     text-align: center;

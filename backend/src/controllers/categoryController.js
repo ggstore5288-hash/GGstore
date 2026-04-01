@@ -56,8 +56,8 @@ const getCategoryById = async (req, res, next) => {
  */
 const createCategory = async (req, res, next) => {
     try {
-        const { name, description } = req.body;
-        const image = req.uploadedImages?.image || null;
+        const { name, description, imageUrl } = req.body;
+        const image = req.uploadedImages?.image || imageUrl || null;
 
         const category = await Category.create({
             name,
@@ -82,8 +82,8 @@ const createCategory = async (req, res, next) => {
  */
 const updateCategory = async (req, res, next) => {
     try {
-        const { name, description } = req.body;
-        const image = req.uploadedImages?.image;
+        const { name, description, imageUrl } = req.body;
+        const image = req.uploadedImages?.image || imageUrl;
 
         const category = await Category.findById(req.params.id);
         if (!category) {

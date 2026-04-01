@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, Upload, Loader } from 'lucide-react';
+import { X, Upload, Loader, Image as ImageIcon, Wand2, Plus, Trash2 } from 'lucide-react';
 import adminAPI from '../../api/admin';
 import ImageUpload from '../ImageUpload';
 import { REGIONS, PLATFORMS, PRODUCT_TYPES } from '../../utils/constants';
+import { convertToDirectLink } from '../../utils/driveUtils';
+import { getImageUrl } from '../../utils/imageUtils';
 
 const ProductFormModal = ({ isOpen, onClose, product = null, onSuccess }) => {
     const [formData, setFormData] = useState({
@@ -16,8 +18,10 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSuccess }) => {
         platform: 'PC',
         region: 'Global',
         isActive: true,
-        images: []
+        images: [], // Can contain File objects or URL strings
+        bannerImages: []
     });
+    const [urlInput, setUrlInput] = useState('');
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
@@ -37,7 +41,8 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSuccess }) => {
                     platform: product.platform || 'PC',
                     region: product.region || 'Global',
                     isActive: product.isActive ?? true,
-                    images: product.images || []
+                    images: product.images || [],
+                    bannerImages: product.bannerImages || []
                 });
             } else {
                 resetForm();
@@ -48,9 +53,6 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSuccess }) => {
     const fetchCategories = async () => {
         try {
             const data = await adminAPI.getCategories();
-            console.log('Categories fetched:', data);
-
-            // Handle different response structures
             let categoriesArray = [];
             if (Array.isArray(data)) {
                 categoriesArray = data;
@@ -59,8 +61,6 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSuccess }) => {
             } else if (data?.data && Array.isArray(data.data)) {
                 categoriesArray = data.data;
             }
-
-            console.log('Categories array:', categoriesArray);
             setCategories(categoriesArray);
         } catch (error) {
             console.error('Error fetching categories:', error);
@@ -80,9 +80,34 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSuccess }) => {
             platform: 'PC',
             region: 'Global',
             isActive: true,
-            images: []
+            images: [],
+            bannerImages: []
         });
+        setUrlInput('');
         setErrors({});
+    };
+
+    const handleAddUrlImage = () => {
+        if (!urlInput.trim()) return;
+        const converted = convertToDirectLink(urlInput.trim());
+        setFormData(prev => ({
+            ...prev,
+            images: [...prev.images, converted]
+        }));
+        setUrlInput('');
+    };
+
+    const handleMagicConvert = () => {
+        if (!urlInput.trim()) return;
+        const converted = convertToDirectLink(urlInput.trim());
+        setUrlInput(converted);
+    };
+
+    const removeImage = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            images: prev.images.filter((_, i) => i !== index)
+        }));
     };
 
     const validate = () => {
@@ -90,7 +115,6 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSuccess }) => {
         if (!formData.name.trim()) newErrors.name = 'Name is required';
         if (!formData.price || formData.price <= 0) newErrors.price = 'Valid price is required';
         if (!formData.category) newErrors.category = 'Category is required';
-        // SKU is only required for new products, optional for updates
         if (!formData.platform.trim()) newErrors.platform = 'Platform is required';
         if (!formData.region.trim()) newErrors.region = 'Region is required';
         if (formData.stock === '' || formData.stock < 0) newErrors.stock = 'Valid stock is required';
@@ -119,15 +143,24 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSuccess }) => {
             formDataObj.append('platform', formData.platform);
             formDataObj.append('region', formData.region);
 
+            // Separate existing URLs and new Files
+            const existingUrls = formData.images.filter(img => typeof img === 'string');
+            const newFiles = formData.images.filter(img => typeof img !== 'string');
 
-
-            if (formData.images && formData.images.length > 0) {
-                formData.images.forEach(image => {
-                    formDataObj.append('images', image);
+            // Send existing URLs as regular body fields
+            if (existingUrls.length > 0) {
+                // Important: Using a special name or array format the backend understands
+                existingUrls.forEach(url => {
+                    formDataObj.append('existingImages[]', url);
                 });
             }
 
-            console.log('Submitting product data (FormData)');
+            // Send new files
+            if (newFiles.length > 0) {
+                newFiles.forEach(file => {
+                    formDataObj.append('images', file);
+                });
+            }
 
             if (product) {
                 await adminAPI.updateProduct(product._id, formDataObj);
@@ -140,7 +173,6 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSuccess }) => {
             resetForm();
         } catch (error) {
             console.error('Error saving product:', error);
-            console.error('Error response:', error.response?.data);
             setErrors({ submit: error.response?.data?.message || 'Failed to save product' });
         } finally {
             setLoading(false);
@@ -211,14 +243,6 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSuccess }) => {
                             borderRadius: 'var(--radius-sm)',
                             transition: 'all var(--transition-fast)'
                         }}
-                        onMouseEnter={(e) => {
-                            e.target.style.background = 'var(--color-bg-secondary)';
-                            e.target.style.color = 'var(--color-text-primary)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.style.background = 'transparent';
-                            e.target.style.color = 'var(--color-text-muted)';
-                        }}
                     >
                         <X size={20} />
                     </button>
@@ -245,84 +269,100 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSuccess }) => {
                     )}
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
-                        {/* Image Upload - Moved to top */}
-                        <div>
-                            <label style={{
-                                display: 'block',
-                                fontSize: '14px',
-                                fontWeight: '500',
-                                color: 'var(--color-text-primary)',
-                                marginBottom: 'var(--spacing-sm)'
-                            }}>
-                                Product Images
+                        {/* Image Management Section */}
+                        <div style={{ background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: 'var(--color-cyan-primary)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                Product Gallery
                             </label>
+                            
+                            {/* URL Add Section */}
+                            <div style={{ marginBottom: '16px' }}>
+                                <label style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '8px' }}>Add Direct Image URL (Drive, Dropbox, etc.)</label>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <input
+                                        className="form-input"
+                                        value={urlInput}
+                                        onChange={e => setUrlInput(e.target.value)}
+                                        placeholder="Paste image link here..."
+                                        style={{ marginBottom: 0, flex: 1 }}
+                                    />
+                                    <button 
+                                        type="button" 
+                                        onClick={handleMagicConvert}
+                                        style={{ padding: '0 10px', background: 'rgba(255,255,255,0.05)', color: 'var(--color-cyan-primary)', border: '1px solid var(--color-border)', borderRadius: '8px' }}
+                                        title="Magic Convert"
+                                    >
+                                        <Wand2 size={16} />
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        onClick={handleAddUrlImage}
+                                        style={{ padding: '0 15px', background: 'var(--color-cyan-primary)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: '700' }}
+                                    >
+                                        <Plus size={18} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Previews (Mixed URLs and Files) */}
+                            {formData.images.length > 0 && (
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '10px', marginBottom: '16px' }}>
+                                    {formData.images.map((img, idx) => (
+                                        <div key={idx} style={{ position: 'relative', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--color-border)' }}>
+                                            <img 
+                                                src={typeof img === 'string' ? getImageUrl(img) : URL.createObjectURL(img)} 
+                                                alt="" 
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            />
+                                            <button 
+                                                type="button" 
+                                                onClick={() => removeImage(idx)} 
+                                                style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(239, 68, 68, 0.8)', border: 'none', borderRadius: '4px', color: '#fff', padding: '2px' }}
+                                            >
+                                                <X size={12} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Local Upload */}
                             <ImageUpload
-                                images={formData.images}
-                                onChange={(images) => handleChange('images', images)}
-                                maxImages={5}
+                                onChange={(files) => {
+                                    // Append new files to existing images
+                                    const newFiles = Array.isArray(files) ? files : [files];
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        images: [...prev.images, ...newFiles]
+                                    }));
+                                }}
+                                maxImages={8}
                                 multiple={true}
+                                preview={false} // We handle custom preview above
                             />
                         </div>
 
                         {/* Name */}
                         <div>
-                            <label style={{
-                                display: 'block',
-                                fontSize: '14px',
-                                fontWeight: '500',
-                                color: 'var(--color-text-primary)',
-                                marginBottom: 'var(--spacing-sm)'
-                            }}>
-                                Product Name *
-                            </label>
+                            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-sm)' }}>Product Name *</label>
                             <input
                                 type="text"
                                 value={formData.name}
                                 onChange={(e) => handleChange('name', e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '10px 12px',
-                                    background: 'var(--color-bg-secondary)',
-                                    border: `1px solid ${errors.name ? 'var(--color-danger)' : 'var(--color-border)'}`,
-                                    borderRadius: 'var(--radius-md)',
-                                    color: 'var(--color-text-primary)',
-                                    fontSize: '14px'
-                                }}
+                                style={{ width: '100%', padding: '10px 12px', background: 'var(--color-bg-secondary)', border: `1px solid ${errors.name ? 'var(--color-danger)' : 'var(--color-border)'}`, borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '14px' }}
                                 placeholder="Enter product name"
                             />
-                            {errors.name && (
-                                <span style={{ fontSize: '12px', color: 'var(--color-danger)', marginTop: '4px', display: 'block' }}>
-                                    {errors.name}
-                                </span>
-                            )}
+                            {errors.name && <span style={{ fontSize: '12px', color: 'var(--color-danger)', marginTop: '4px', display: 'block' }}>{errors.name}</span>}
                         </div>
 
                         {/* Description */}
                         <div>
-                            <label style={{
-                                display: 'block',
-                                fontSize: '14px',
-                                fontWeight: '500',
-                                color: 'var(--color-text-primary)',
-                                marginBottom: 'var(--spacing-sm)'
-                            }}>
-                                Description
-                            </label>
+                            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-sm)' }}>Description</label>
                             <textarea
                                 value={formData.description}
                                 onChange={(e) => handleChange('description', e.target.value)}
-                                rows={4}
-                                style={{
-                                    width: '100%',
-                                    padding: '10px 12px',
-                                    background: 'var(--color-bg-secondary)',
-                                    border: '1px solid var(--color-border)',
-                                    borderRadius: 'var(--radius-md)',
-                                    color: 'var(--color-text-primary)',
-                                    fontSize: '14px',
-                                    resize: 'vertical',
-                                    fontFamily: 'inherit'
-                                }}
+                                rows={3}
+                                style={{ width: '100%', padding: '10px 12px', background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '14px', resize: 'vertical' }}
                                 placeholder="Enter product description"
                             />
                         </div>
@@ -330,9 +370,7 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSuccess }) => {
                         {/* Price and Discount */}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}>
                             <div>
-                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-sm)' }}>
-                                    Price ($) *
-                                </label>
+                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-sm)' }}>Price ($) *</label>
                                 <input
                                     type="number"
                                     step="0.01"
@@ -344,9 +382,7 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSuccess }) => {
                                 {errors.price && <span style={{ fontSize: '12px', color: 'var(--color-danger)', marginTop: '4px', display: 'block' }}>{errors.price}</span>}
                             </div>
                             <div>
-                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-sm)' }}>
-                                    Discount Price ($)
-                                </label>
+                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-sm)' }}>Discount Price ($)</label>
                                 <input
                                     type="number"
                                     step="0.01"
@@ -361,9 +397,7 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSuccess }) => {
                         {/* Stock and Category */}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}>
                             <div>
-                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-sm)' }}>
-                                    Stock *
-                                </label>
+                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-sm)' }}>Stock *</label>
                                 <input
                                     type="number"
                                     value={formData.stock}
@@ -374,9 +408,7 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSuccess }) => {
                                 {errors.stock && <span style={{ fontSize: '12px', color: 'var(--color-danger)', marginTop: '4px', display: 'block' }}>{errors.stock}</span>}
                             </div>
                             <div>
-                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-sm)' }}>
-                                    Category *
-                                </label>
+                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-sm)' }}>Category *</label>
                                 <select
                                     value={formData.category}
                                     onChange={(e) => handleChange('category', e.target.value)}
@@ -391,12 +423,22 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSuccess }) => {
                             </div>
                         </div>
 
-                        {/* Type */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--spacing-md)' }}>
+                        {/* Platform and Type */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}>
                             <div>
-                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-sm)' }}>
-                                    Type
-                                </label>
+                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-sm)' }}>Platform *</label>
+                                <select
+                                    value={formData.platform}
+                                    onChange={(e) => handleChange('platform', e.target.value)}
+                                    style={{ width: '100%', padding: '10px 12px', background: 'var(--color-bg-secondary)', border: `1px solid ${errors.platform ? 'var(--color-danger)' : 'var(--color-border)'}`, borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '14px' }}
+                                >
+                                    {Object.values(PLATFORMS).map(platform => (
+                                        <option key={platform} value={platform}>{platform}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-sm)' }}>Type</label>
                                 <select
                                     value={formData.type}
                                     onChange={(e) => handleChange('type', e.target.value)}
@@ -410,40 +452,6 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSuccess }) => {
                             </div>
                         </div>
 
-                        {/* Platform and Region */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}>
-                            <div>
-                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-sm)' }}>
-                                    Platform *
-                                </label>
-                                <select
-                                    value={formData.platform}
-                                    onChange={(e) => handleChange('platform', e.target.value)}
-                                    style={{ width: '100%', padding: '10px 12px', background: 'var(--color-bg-secondary)', border: `1px solid ${errors.platform ? 'var(--color-danger)' : 'var(--color-border)'}`, borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '14px' }}
-                                >
-                                    {Object.values(PLATFORMS).map(platform => (
-                                        <option key={platform} value={platform}>{platform}</option>
-                                    ))}
-                                </select>
-                                {errors.platform && <span style={{ fontSize: '12px', color: 'var(--color-danger)', marginTop: '4px', display: 'block' }}>{errors.platform}</span>}
-                            </div>
-                            <div>
-                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-sm)' }}>
-                                    Region *
-                                </label>
-                                <select
-                                    value={formData.region}
-                                    onChange={(e) => handleChange('region', e.target.value)}
-                                    style={{ width: '100%', padding: '10px 12px', background: 'var(--color-bg-secondary)', border: `1px solid ${errors.region ? 'var(--color-danger)' : 'var(--color-border)'}`, borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '14px' }}
-                                >
-                                    {Object.values(REGIONS).map(region => (
-                                        <option key={region} value={region}>{region}</option>
-                                    ))}
-                                </select>
-                                {errors.region && <span style={{ fontSize: '12px', color: 'var(--color-danger)', marginTop: '4px', display: 'block' }}>{errors.region}</span>}
-                            </div>
-                        </div>
-
                         {/* Status */}
                         <div>
                             <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', cursor: 'pointer', fontSize: '14px', color: 'var(--color-text-primary)' }}>
@@ -451,57 +459,19 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSuccess }) => {
                                     type="checkbox"
                                     checked={formData.isActive}
                                     onChange={(e) => handleChange('isActive', e.target.checked)}
-                                    style={{ cursor: 'pointer' }}
                                 />
                                 Active Product
                             </label>
                         </div>
-
-
                     </div>
                 </form>
 
                 {/* Footer */}
-                <div style={{
-                    padding: 'var(--spacing-lg)',
-                    borderTop: '1px solid var(--color-border)',
-                    display: 'flex',
-                    gap: 'var(--spacing-md)',
-                    justifyContent: 'flex-end'
-                }}>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        disabled={loading}
-                        style={{
-                            padding: '10px 20px',
-                            background: 'transparent',
-                            border: '1px solid var(--color-border)',
-                            borderRadius: 'var(--radius-md)',
-                            color: 'var(--color-text-secondary)',
-                            fontWeight: '500',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            opacity: loading ? 0.5 : 1
-                        }}
-                    >
+                <div style={{ padding: 'var(--spacing-lg)', borderTop: '1px solid var(--color-border)', display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'flex-end' }}>
+                    <button type="button" onClick={onClose} disabled={loading} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-secondary)', fontWeight: '500', cursor: loading ? 'not-allowed' : 'pointer' }}>
                         Cancel
                     </button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={loading}
-                        style={{
-                            padding: '10px 20px',
-                            background: loading ? 'var(--color-text-muted)' : 'var(--color-primary)',
-                            border: 'none',
-                            borderRadius: 'var(--radius-md)',
-                            color: '#000',
-                            fontWeight: '600',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px'
-                        }}
-                    >
+                    <button onClick={handleSubmit} disabled={loading} style={{ padding: '10px 20px', background: loading ? 'var(--color-text-muted)' : 'var(--color-cyan-primary)', border: 'none', borderRadius: 'var(--radius-md)', color: '#000', fontWeight: '700', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {loading && <Loader size={16} className="spin" />}
                         {loading ? 'Saving...' : (product ? 'Update Product' : 'Create Product')}
                     </button>

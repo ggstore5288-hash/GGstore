@@ -26,7 +26,7 @@ export const getImageUrl = (path) => {
             return PRODUCTION_BASE;
         }
         const envUrl = import.meta.env.VITE_API_URL;
-        const apiUrl = envUrl || 'http://localhost:5000/api';
+        const apiUrl = envUrl || 'http://localhost:5001/api';
         return apiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
     };
 

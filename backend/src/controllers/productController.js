@@ -149,10 +149,23 @@ const createProduct = async (req, res, next) => {
         // req.body.images and req.body.bannerImages are handled by uploadMiddleware/processUploadedImages
         // If files were uploaded via multer, they might be in req.files
 
-        // Handle images from middleware processing if available
-        if (req.uploadedImages) {
-            req.body.images = req.uploadedImages.images || [];
-            req.body.bannerImages = req.uploadedImages.bannerImages || [];
+        // Handle gallery images
+        const galleryImages = [];
+        // 1. Add existing URLs from body
+        if (req.body.existingImages) {
+            const urls = Array.isArray(req.body.existingImages) ? req.body.existingImages : [req.body.existingImages];
+            galleryImages.push(...urls);
+        }
+        // 2. Add newly uploaded files
+        if (req.uploadedImages?.images) {
+            galleryImages.push(...req.uploadedImages.images);
+        }
+        
+        req.body.images = galleryImages;
+
+        // Handle banner images similarly
+        if (req.uploadedImages?.bannerImages) {
+            req.body.bannerImages = req.uploadedImages.bannerImages;
         }
 
         const product = await Product.create(req.body);
@@ -180,19 +193,28 @@ const updateProduct = async (req, res, next) => {
             return next(new AppError('Product not found', HTTP_STATUS.NOT_FOUND));
         }
 
-        // Handle new images
-        if (req.uploadedImages) {
-            if (req.uploadedImages.images && req.uploadedImages.images.length > 0) {
-                // Determine if we append or replace? Usually replacement or specific handling. 
-                // For simplicity here, let's assume we append new ones, or replace if client sent clear flag.
-                // But typically multipart update is tricky. Let's assume replacement for now if provided.
-                // Or better, let generic body handling take precedence if client sends explicit array.
-                // If files provided, append them.
-                req.body.images = [...product.images, ...req.uploadedImages.images];
-            }
-            if (req.uploadedImages.bannerImages && req.uploadedImages.bannerImages.length > 0) {
-                req.body.bannerImages = [...product.bannerImages, ...req.uploadedImages.bannerImages];
-            }
+        // Handle images: Merge existing URLs from body + newly uploaded files
+        const galleryImages = [];
+        
+        // 1. If existingImages sent in body, use those (this reflects the current state of UI gallery)
+        if (req.body.existingImages) {
+            const urls = Array.isArray(req.body.existingImages) ? req.body.existingImages : [req.body.existingImages];
+            galleryImages.push(...urls);
+        } else if (!req.uploadedImages?.images) {
+            // If neither sent, keep current images
+            galleryImages.push(...product.images);
+        }
+
+        // 2. Add newly uploaded files
+        if (req.uploadedImages?.images) {
+            galleryImages.push(...req.uploadedImages.images);
+        }
+
+        req.body.images = galleryImages;
+
+        // Similar for bannerImages
+        if (req.uploadedImages?.bannerImages) {
+            req.body.bannerImages = req.uploadedImages.bannerImages;
         }
 
         // Update fields

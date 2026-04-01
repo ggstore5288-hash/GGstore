@@ -52,9 +52,12 @@ const createBanner = async (req, res, next) => {
             );
         }
 
+        // Image priority: 1. Processed file, 2. External URL, 3. Raw file path
+        const bannerImage = req.uploadedImages?.bannerImage || imageUrl || (req.file ? getFilePath(req.file) : null);
+
         const banner = await Banner.create({
             title,
-            image: req.uploadedImages?.bannerImage || (req.file ? getFilePath(req.file) : null),
+            image: bannerImage,
             link,
             position,
             order,
@@ -104,9 +107,11 @@ const updateBanner = async (req, res, next) => {
         if (order !== undefined) banner.order = order;
         if (isActive !== undefined) banner.isActive = isActive;
         
-        // Use processed image URL from middleware if a file was uploaded
+        // Priority: 1. New processed images, 2. External URL, 3. Raw file path
         if (req.uploadedImages?.bannerImage) {
             banner.image = req.uploadedImages.bannerImage;
+        } else if (imageUrl) {
+            banner.image = imageUrl;
         } else if (req.file) {
             banner.image = getFilePath(req.file);
         }

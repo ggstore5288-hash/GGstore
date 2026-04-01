@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, Save, Pencil, Trash2, Eye, EyeOff, ArrowUp, ArrowDown, Image as ImageIcon, Star } from 'lucide-react';
+import { Plus, X, Save, Pencil, Trash2, Eye, EyeOff, ArrowUp, ArrowDown, Image as ImageIcon, Star, Wand2 } from 'lucide-react';
 import adminAPI from '../../api/admin';
 import { getImageUrl } from '../../utils/imageUtils';
+import { convertToDirectLink } from '../../utils/driveUtils';
 
 const Content = () => {
     const [activeTab, setActiveTab] = useState('banners');
@@ -19,7 +20,8 @@ const Content = () => {
         position: 'homepage',
         order: 0,
         isActive: true,
-        image: null
+        image: null,
+        imageUrl: '' // New field
     });
     const [featuredFormData, setFeaturedFormData] = useState({
         productId: '',
@@ -61,7 +63,8 @@ const Content = () => {
             position: banner.position || 'homepage',
             order: banner.order || 0,
             isActive: banner.isActive !== undefined ? banner.isActive : true,
-            image: null
+            image: null,
+            imageUrl: banner.image || ''
         });
         setIsBannerModalOpen(true);
     };
@@ -74,7 +77,8 @@ const Content = () => {
             position: 'homepage',
             order: banners.length,
             isActive: true,
-            image: null
+            image: null,
+            imageUrl: ''
         });
         setIsBannerModalOpen(true);
     };
@@ -90,6 +94,12 @@ const Content = () => {
         }
     };
 
+    const handleMagicConvert = () => {
+        if (!bannerFormData.imageUrl) return;
+        const converted = convertToDirectLink(bannerFormData.imageUrl);
+        setBannerFormData({ ...bannerFormData, imageUrl: converted });
+    };
+
     const handleBannerSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -99,7 +109,13 @@ const Content = () => {
             data.append('position', bannerFormData.position);
             data.append('order', bannerFormData.order);
             data.append('isActive', bannerFormData.isActive);
-            if (bannerFormData.image) data.append('bannerImage', bannerFormData.image);
+            
+            // Send either the file or the direct URL
+            if (bannerFormData.image) {
+                data.append('bannerImage', bannerFormData.image);
+            } else if (bannerFormData.imageUrl) {
+                data.append('imageUrl', bannerFormData.imageUrl);
+            }
 
             if (editingBanner) {
                 await adminAPI.updateBanner(editingBanner._id, data);
@@ -404,7 +420,7 @@ const Content = () => {
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                                 {featured.product?.images?.[0] && (
                                                     <img
-                                                        src={featured.product.images[0]}
+                                                        src={getImageUrl(featured.product.images[0])}
                                                         alt=""
                                                         style={{ width: '50px', height: '50px', borderRadius: '8px', objectFit: 'cover' }}
                                                     />
@@ -475,6 +491,35 @@ const Content = () => {
                                     placeholder="https://..."
                                 />
                             </div>
+                            
+                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px', marginBottom: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    External Image URL
+                                    <span style={{ fontSize: '10px', opacity: 0.5 }}>Recommended for Speed</span>
+                                </label>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <input
+                                        className="form-input"
+                                        value={bannerFormData.imageUrl}
+                                        onChange={e => setBannerFormData({ ...bannerFormData, imageUrl: e.target.value })}
+                                        placeholder="Google Drive, Dropbox, etc."
+                                        style={{ marginBottom: 0 }}
+                                    />
+                                    <button 
+                                        type="button" 
+                                        onClick={handleMagicConvert}
+                                        className="btn-secondary"
+                                        style={{ padding: '0 12px', height: '42px' }}
+                                        title="Magic Convert (Drive/Dropbox)"
+                                    >
+                                        <Wand2 size={18} />
+                                    </button>
+                                </div>
+                                <p style={{ fontSize: '10px', marginTop: '4px', color: 'var(--color-text-muted)' }}>
+                                    Paste a Google Drive sharing link and click the wand!
+                                </p>
+                            </div>
+
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                                 <div className="form-group">
                                     <label className="form-label">Position</label>
@@ -509,22 +554,35 @@ const Content = () => {
                                     <span>Active</span>
                                 </label>
                             </div>
+                            
                             <div className="form-group">
-                                <label className="form-label">Banner Image {!editingBanner && '*'}</label>
+                                <label className="form-label">Or Upload Local Image {!editingBanner && !bannerFormData.imageUrl && '*'}</label>
                                 <input
                                     type="file"
                                     accept="image/*"
                                     onChange={e => setBannerFormData({ ...bannerFormData, image: e.target.files[0] })}
                                     className="form-input"
                                     style={{ padding: '8px' }}
-                                    required={!editingBanner}
+                                    required={!editingBanner && !bannerFormData.imageUrl}
                                 />
-                                {editingBanner?.image && !bannerFormData.image && (
-                                    <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '4px' }}>
-                                        Current image will be kept if no new image is selected
+                                {bannerFormData.imageUrl && (
+                                    <p style={{ fontSize: '12px', color: '#34d399', marginTop: '4px' }}>
+                                        Using external URL as priority.
                                     </p>
                                 )}
                             </div>
+
+                            {/* Preview section */}
+                            {(bannerFormData.imageUrl || bannerFormData.image) && (
+                                <div style={{ marginBottom: '16px', borderRadius: '8px', overflow: 'hidden', height: '100px', border: '1px solid var(--color-border)' }}>
+                                    <img 
+                                        src={bannerFormData.image ? URL.createObjectURL(bannerFormData.image) : bannerFormData.imageUrl} 
+                                        alt="Preview" 
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    />
+                                </div>
+                            )}
+
                             <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
                                 <button type="button" onClick={() => setIsBannerModalOpen(false)} className="btn-secondary" style={{ flex: 1 }}>
                                     Cancel
@@ -538,8 +596,8 @@ const Content = () => {
                     </div>
                 </div>
             )}
-
-            {/* Featured Product Modal */}
+            
+            {/* Featured Product Modal (No changes needed) */}
             {isFeaturedModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content" style={{ maxWidth: '500px' }}>
@@ -568,7 +626,7 @@ const Content = () => {
                                     ))}
                                 </select>
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                            <div style={{ gridTemplateColumns: '1fr 1fr', display: 'grid', gap: '16px' }}>
                                 <div className="form-group">
                                     <label className="form-label">Section</label>
                                     <select
@@ -621,3 +679,4 @@ const Content = () => {
 };
 
 export default Content;
+
