@@ -38,10 +38,10 @@ const getBanners = async (req, res, next) => {
  */
 const createBanner = async (req, res, next) => {
     try {
-        const { title, link, position, order, isActive } = req.body;
+        const { title, link, position, order, isActive, imageUrl } = req.body;
 
-        if (!req.file) {
-            return next(new AppError('Banner image is required', HTTP_STATUS.BAD_REQUEST));
+        if (!req.file && !imageUrl) {
+            return next(new AppError('Banner image or URL is required', HTTP_STATUS.BAD_REQUEST));
         }
 
         // If making this banner active and it's for homepage, deactivate others
@@ -86,7 +86,7 @@ const updateBanner = async (req, res, next) => {
             return next(new AppError('Banner not found', HTTP_STATUS.NOT_FOUND));
         }
 
-        const { title, link, position, order, isActive } = req.body;
+        const { title, link, position, order, isActive, imageUrl } = req.body;
 
         // If setting to active, deactivate others in same position
         if (isActive === 'true' || isActive === true) {

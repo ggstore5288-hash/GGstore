@@ -156,6 +156,16 @@ app.use('/api', (req, res, next) => {
     return verifyCSRFToken(req, res, next);
 });
 
+// Root route - Friendly welcome and version info
+app.get('/', (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: 'GG Store API is running',
+        version: process.env.npm_package_version || '1.0.0',
+        environment: process.env.NODE_ENV || 'production'
+    });
+});
+
 // Ultra-lightweight ping route — no DB query.
 // Use this URL in UptimeRobot to prevent Render cold starts:
 //   https://ggstore-zjau.onrender.com/ping

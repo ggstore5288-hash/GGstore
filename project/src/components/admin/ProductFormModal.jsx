@@ -149,9 +149,8 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSuccess }) => {
 
             // Send existing URLs as regular body fields
             if (existingUrls.length > 0) {
-                // Important: Using a special name or array format the backend understands
                 existingUrls.forEach(url => {
-                    formDataObj.append('existingImages[]', url);
+                    formDataObj.append('existingImages', url);
                 });
             }
 
