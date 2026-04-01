@@ -73,7 +73,7 @@ const Categories = () => {
             <div className="categories-grid">
                 {categories.map(cat => (
                     <Link to={`/games?category=${cat._id}`} key={cat._id} className="category-card">
-                        {cat.image && <img src={getImageUrl(cat.image)} alt={cat.name} className="category-bg" />}
+                        {cat.image && <img src={getImageUrl(cat.image)} alt={cat.name} className="category-bg" loading="eager" decoding="async" />}
                         <span className="category-name">{cat.name}</span>
                     </Link>
                 ))}

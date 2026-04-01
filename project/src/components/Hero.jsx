@@ -202,6 +202,9 @@ const Hero = () => {
                         src={heroImage || "/images/banner.webp"}
                         alt={heroTitle || "Featured Game"}
                         className="hero-banner-image"
+                        loading="eager"
+                        fetchpriority="high"
+                        decoding="async"
                     />
                 </div>
             </div>

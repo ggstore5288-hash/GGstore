@@ -292,7 +292,13 @@ const GameCard = ({ product }) => {
             `}</style>
 
             <div className="card-image-container">
-                <img src={image} alt={product.name} className="card-image" />
+                <img 
+                    src={image} 
+                    alt={product.name} 
+                    className="card-image" 
+                    loading="eager"
+                    decoding="async"
+                />
 
                 <div className="card-badges">
                     {isFlashSale && (

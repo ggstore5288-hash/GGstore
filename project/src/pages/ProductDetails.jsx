@@ -153,6 +153,9 @@ const ProductDetails = () => {
                                     alt={product.name}
                                     onLoad={() => setImageLoaded(true)}
                                     className="main-product-image"
+                                    loading="eager"
+                                    fetchpriority="high"
+                                    decoding="async"
                                     onMouseOver={(e) => {
                                         e.currentTarget.style.transform = 'scale(1.05) translateY(-10px)';
                                         e.currentTarget.style.boxShadow = '0 30px 60px -15px rgba(0, 217, 255, 0.3)';
