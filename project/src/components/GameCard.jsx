@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { getImageUrl } from '../utils/imageUtils';
 import client from '../api/client';
+import SmartImage from './SmartImage';
 
 const GameCard = ({ product }) => {
     const { addToCart } = useCart();
@@ -292,12 +293,11 @@ const GameCard = ({ product }) => {
             `}</style>
 
             <div className="card-image-container">
-                <img 
+                <SmartImage 
                     src={image} 
                     alt={product.name} 
                     className="card-image" 
-                    loading="eager"
-                    decoding="async"
+                    loading="lazy"
                 />
 
                 <div className="card-badges">

@@ -12,7 +12,6 @@ const Header = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-
     const siteName = getSetting('site.name', 'SUB HUB');
     const bannerText = getSetting('marketing.banner_text', '');
     const isMaintenance = getSetting('site.maintenance', false);
@@ -21,6 +20,30 @@ const Header = () => {
     useEffect(() => {
         setIsMenuOpen(false);
     }, [location.pathname]);
+
+    // Define memoized navigation links
+    const links = [
+        { path: '/', label: 'Home' },
+        { path: '/games', label: 'Games' },
+        { path: '/categories', label: 'Categories' }
+    ];
+
+    // Use a memoized navigation list to prevent unnecessary re-renders
+    const NavigationLinks = React.useMemo(() => {
+        return ({ location }) => (
+            <nav className="nav-links">
+                {links.map(link => (
+                    <Link 
+                        key={link.path} 
+                        to={link.path} 
+                        className={`nav-link ${location.pathname === link.path ? 'active' : ''}`}
+                    >
+                        {link.label}
+                    </Link>
+                ))}
+            </nav>
+        );
+    }, [location.pathname]); // Only rebuild when path changes
 
     // Prevent scroll when menu is open
     useEffect(() => {
@@ -127,14 +150,11 @@ const Header = () => {
 
                 .nav-link {
                     color: var(--color-text-secondary);
-                    text-decoration: none;
-                    font-family: var(--font-display);
-                    font-weight: var(--fw-medium);
-                    text-transform: uppercase;
-                    letter-spacing: var(--ls-nav);
-                    transition: color 0.2s;
+                    transition: color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
                     font-size: 14px;
                     position: relative;
+                    transform: translateZ(0); /* GPU acceleration for INP */
+                    will-change: color;
                 }
 
                 .nav-link:hover, .nav-link.active {
@@ -403,12 +423,7 @@ const Header = () => {
 
                         {/* Center: Navigation (Desktop) */}
                         <div className="header-center">
-                            <nav className="nav-links">
-                                <Link to="/" className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}>Home</Link>
-                                <Link to="/games" className={`nav-link ${location.pathname === '/games' ? 'active' : ''}`}>Games</Link>
-                                <Link to="/categories" className={`nav-link ${location.pathname === '/categories' ? 'active' : ''}`}>Categories</Link>
-                                <Link to="/about" className={`nav-link ${location.pathname === '/about' ? 'active' : ''}`}>About</Link>
-                            </nav>
+                            <NavigationLinks location={location} />
                         </div>
 
                         {/* Right: User Actions */}

@@ -1,14 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSettings } from '../context/SettingsContext';
+import client from '../api/client';
+import SmartImage from './SmartImage';
+import { getImageUrl } from '../utils/imageUtils';
 
 const Hero = () => {
     const { getSetting, loadingSettings } = useSettings();
+    const [banner, setBanner] = useState(null);
+    const [loadingBanner, setLoadingBanner] = useState(true);
 
-    if (loadingSettings) return null; // Or a skeleton
+    useEffect(() => {
+        const fetchBanner = async () => {
+            try {
+                const response = await client.get('/content/banners?position=homepage&active=true');
+                if (response.data?.success && response.data.data.banners?.length > 0) {
+                    setBanner(response.data.data.banners[0]);
+                }
+            } catch (error) {
+                console.error("Failed to fetch hero banner:", error);
+            } finally {
+                setLoadingBanner(false);
+            }
+        };
 
-    // Fetch values from settings context, defaulting to GTA V fallback
-    const heroImage = getSetting('marketing.hero_image');
-    const heroTitle = getSetting('marketing.hero_title');
+        fetchBanner();
+    }, []);
+
+    if (loadingSettings || loadingBanner) return null;
+
+    // Use dynamic banner from Content section, fallback to Settings
+    const heroImage = banner?.image ? getImageUrl(banner.image) : getSetting('marketing.hero_image');
+    const heroTitle = banner?.title || getSetting('marketing.hero_title') || 'Welcome to Store';
+    const heroLink = banner?.link || '/games';
 
 
     return (
@@ -198,14 +221,26 @@ const Hero = () => {
 
             <div className="hero-container">
                 <div className="hero-banner-wrapper">
-                    <img
+                    <SmartImage
                         src={heroImage || "/images/banner.webp"}
-                        alt={heroTitle || "Featured Game"}
+                        alt={heroTitle}
                         className="hero-banner-image"
                         loading="eager"
                         fetchpriority="high"
-                        decoding="async"
                     />
+                    <div className="hero-overlay"></div>
+                    <div className="hero-content">
+                        <div className="hero-text">
+                            <span className="hero-label">Hot Deals</span>
+                            <h1 className="hero-title">{heroTitle}</h1>
+                            <p className="hero-subtitle">
+                                Get the best prices on gaming subscriptions and top-up cards.
+                            </p>
+                        </div>
+                        <a href={heroLink} className="hero-cta">
+                            Shop Now
+                        </a>
+                    </div>
                 </div>
             </div>
         </section>
