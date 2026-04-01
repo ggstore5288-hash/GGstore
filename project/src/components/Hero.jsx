@@ -216,9 +216,7 @@ const Hero = () => {
                     <div className="hero-overlay"></div>
                     <div className="hero-content">
                         <div className="hero-text">
-                            <span className="hero-label">{displayLabel}</span>
                             <h1 className="hero-title">{displayTitle}</h1>
-                            <p className="hero-subtitle">{displaySubtitle}</p>
                         </div>
                         <a href={displayLink} className="hero-cta">
                             {displayButtonText}
