@@ -73,6 +73,7 @@ const getProducts = async (req, res, next) => {
 
         const total = await Product.countDocuments(query);
 
+        res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
         res.status(HTTP_STATUS.OK).json({
             success: true,
             data: {
@@ -105,6 +106,7 @@ const getProductById = async (req, res, next) => {
         product.viewCount += 1;
         await product.save({ validateBeforeSave: false });
 
+        res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=120');
         res.status(HTTP_STATUS.OK).json({
             success: true,
             data: { product }

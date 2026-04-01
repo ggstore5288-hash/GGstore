@@ -37,9 +37,15 @@ const startServer = async () => {
             console.log(`📡 Port: ${PORT}`);
             console.log(`🌐 URL: http://localhost:${PORT}`);
             console.log(`💚 Health: http://localhost:${PORT}/health`);
+            console.log(`🏓 Ping:   http://localhost:${PORT}/ping`);
             console.log('='.repeat(50));
             console.log('');
         });
+
+        // Enable HTTP keep-alive — reuses TCP connections for multiple requests.
+        // This cuts connection overhead significantly under load (e.g. Render free tier).
+        server.keepAliveTimeout = 65000; // must be > Render's 60s idle timeout
+        server.headersTimeout = 66000;   // slightly higher than keepAliveTimeout
 
         // Handle server errors (e.g., EADDRINUSE)
         server.on('error', (err) => {

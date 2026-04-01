@@ -21,6 +21,7 @@ const getBanners = async (req, res, next) => {
 
         const banners = await Banner.find(query).sort({ order: 1, createdAt: -1 });
 
+        res.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=300');
         res.status(HTTP_STATUS.OK).json({
             success: true,
             data: { banners }

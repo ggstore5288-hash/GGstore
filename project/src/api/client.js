@@ -33,8 +33,14 @@ const client = axios.create({
     withCredentials: true // Important for cookies (refreshToken and CSRF)
 });
 
-// CSRF token storage
+// CSRF token storage with expiry tracking
 let csrfToken = null;
+let csrfTokenExpiry = 0; // Unix timestamp ms when current token expires
+
+// Helper to check if stored CSRF token is still valid (with 1min buffer)
+const isCsrfTokenValid = () => {
+    return csrfToken && Date.now() < (csrfTokenExpiry - 60 * 1000);
+};
 
 // Helper to get CSRF token from cookie
 const getCsrfTokenFromCookie = () => {

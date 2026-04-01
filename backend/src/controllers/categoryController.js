@@ -17,6 +17,7 @@ const getCategories = async (req, res, next) => {
 
         const categories = await Category.find(query).sort({ name: 1 });
 
+        res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
         res.status(HTTP_STATUS.OK).json({
             success: true,
             data: { categories }

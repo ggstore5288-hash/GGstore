@@ -156,6 +156,14 @@ app.use('/api', (req, res, next) => {
     return verifyCSRFToken(req, res, next);
 });
 
+// Ultra-lightweight ping route — no DB query.
+// Use this URL in UptimeRobot to prevent Render cold starts:
+//   https://ggstore-zjau.onrender.com/ping
+app.get('/ping', (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.status(200).json({ ok: true, ts: Date.now() });
+});
+
 // Health check route
 app.get('/health', async (req, res) => {
     const mongoose = require('mongoose');
