@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, X, Save, Pencil, Trash2, Eye, EyeOff, ArrowUp, ArrowDown, Image as ImageIcon, Star } from 'lucide-react';
 import adminAPI from '../../api/admin';
+import { getImageUrl } from '../../utils/imageUtils';
 
 const Content = () => {
     const [activeTab, setActiveTab] = useState('banners');
@@ -296,7 +297,7 @@ const Content = () => {
                                 {banner.image && (
                                     <div style={{ height: '150px', background: 'var(--color-bg-secondary)', position: 'relative' }}>
                                         <img 
-                                            src={banner.image} 
+                                            src={getImageUrl(banner.image)} 
                                             alt={banner.title}
                                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                         />

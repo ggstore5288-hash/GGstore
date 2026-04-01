@@ -73,6 +73,8 @@ const fetchCsrfToken = async () => {
         const tokenFromCookie = getCsrfTokenFromCookie();
 
         csrfToken = tokenFromHeader || tokenFromData || tokenFromCookie;
+        // Cache for 14 minutes (token expires at 15 minutes on backend)
+        csrfTokenExpiry = Date.now() + 14 * 60 * 1000;
         return csrfToken;
     } catch (error) {
         console.error('Failed to fetch CSRF token:', error);
@@ -130,15 +132,16 @@ client.interceptors.request.use(
 
         // Add CSRF token for state-changing requests
         if (['post', 'put', 'delete', 'patch'].includes(config.method.toLowerCase())) {
-            // Try to get fresh token from cookie first
-            const tokenFromCookie = getCsrfTokenFromCookie();
-            if (tokenFromCookie) {
-                csrfToken = tokenFromCookie;
-            }
-
-            // If no token, fetch a new one
-            if (!csrfToken) {
-                await fetchCsrfToken();
+            // Use cached token if still valid — avoids a network round-trip on every mutation
+            if (!isCsrfTokenValid()) {
+                // Try cookie first (cheapest), then fetch from backend
+                const tokenFromCookie = getCsrfTokenFromCookie();
+                if (tokenFromCookie) {
+                    csrfToken = tokenFromCookie;
+                    csrfTokenExpiry = Date.now() + 14 * 60 * 1000;
+                } else {
+                    await fetchCsrfToken();
+                }
             }
 
             if (csrfToken) {

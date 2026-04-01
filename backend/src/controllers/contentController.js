@@ -54,7 +54,7 @@ const createBanner = async (req, res, next) => {
 
         const banner = await Banner.create({
             title,
-            image: getFilePath(req.file),
+            image: req.uploadedImages?.bannerImage || (req.file ? getFilePath(req.file) : null),
             link,
             position,
             order,
@@ -103,7 +103,13 @@ const updateBanner = async (req, res, next) => {
         if (position) banner.position = position;
         if (order !== undefined) banner.order = order;
         if (isActive !== undefined) banner.isActive = isActive;
-        if (req.file) banner.image = getFilePath(req.file);
+        
+        // Use processed image URL from middleware if a file was uploaded
+        if (req.uploadedImages?.bannerImage) {
+            banner.image = req.uploadedImages.bannerImage;
+        } else if (req.file) {
+            banner.image = getFilePath(req.file);
+        }
 
         await banner.save();
 

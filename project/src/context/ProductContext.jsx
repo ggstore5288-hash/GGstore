@@ -47,10 +47,12 @@ export const ProductProvider = ({ children }) => {
         }
     };
 
-    // Load initial data
+    // Load initial data — fire both requests in parallel, not sequentially
     useEffect(() => {
-        fetchProducts({ active: 'true', limit: 12 });
-        fetchCategories(true);
+        Promise.all([
+            fetchProducts({ active: 'true', limit: 12 }),
+            fetchCategories(true)
+        ]);
     }, []);
 
     const value = {

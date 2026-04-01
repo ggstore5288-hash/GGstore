@@ -156,14 +156,14 @@ const adminAPI = {
     createBanner: async (bannerData) => {
         // bannerData should be FormData for image upload
         const response = await client.post('/content/banners', bannerData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
+            headers: { 'Content-Type': undefined }
         });
         return response.data;
     },
 
     updateBanner: async (id, bannerData) => {
         const response = await client.put(`/content/banners/${id}`, bannerData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
+            headers: { 'Content-Type': undefined }
         });
         return response.data;
     },
@@ -339,7 +339,7 @@ const adminAPI = {
         const formData = new FormData();
         formData.append('file', file);
         const response = await client.post('/upload', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
+            headers: { 'Content-Type': undefined }
         });
         return response.data;
     },

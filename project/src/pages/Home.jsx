@@ -16,13 +16,18 @@ const Home = () => {
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const search = params.get('search');
-        const category = params.get('category');
+        const categoryFromUrl = params.get('category');
 
-        if (category) setActiveCategory(category);
+        // Sync URL param to state without triggering another re-render
+        const effectiveCategory = categoryFromUrl || activeCategory;
+        if (categoryFromUrl && categoryFromUrl !== activeCategory) {
+            setActiveCategory(categoryFromUrl);
+            return; // The state update above will re-trigger this effect with the correct value
+        }
 
         fetchProducts({
             search,
-            category: category || activeCategory,
+            category: effectiveCategory,
             sort: sortBy
         });
     }, [location.search, activeCategory, sortBy]);
