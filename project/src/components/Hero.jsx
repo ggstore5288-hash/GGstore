@@ -213,15 +213,6 @@ const Hero = () => {
                         alt={displayTitle}
                         className="hero-banner-image"
                     />
-                    <div className="hero-overlay"></div>
-                    <div className="hero-content">
-                        <div className="hero-text">
-                            <h1 className="hero-title">{displayTitle}</h1>
-                        </div>
-                        <a href={displayLink} className="hero-cta">
-                            {displayButtonText}
-                        </a>
-                    </div>
                 </div>
             </div>
         </section>
