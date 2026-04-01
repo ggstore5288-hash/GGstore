@@ -5,10 +5,12 @@ const {
     createBanner,
     updateBanner,
     deleteBanner,
+    reorderBanners,
     getFeaturedProducts,
     addFeaturedProduct,
     updateFeaturedProduct,
-    removeFeaturedProduct
+    removeFeaturedProduct,
+    reorderFeatured
 } = require('../controllers/contentController');
 const { protect } = require('../middleware/authMiddleware');
 const { requireAdmin } = require('../middleware/roleMiddleware');
@@ -33,6 +35,9 @@ router.put('/banners/:id', protect, requireAdmin, auditLog, uploadSingle('banner
 // @route   DELETE /api/content/banners/:id
 router.delete('/banners/:id', protect, requireAdmin, auditLog, mongoIdValidator, validate, deleteBanner);
 
+// @route   POST /api/content/banners/reorder
+router.post('/banners/reorder', protect, requireAdmin, auditLog, reorderBanners);
+
 // ========== FEATURED PRODUCT ROUTES ==========
 
 // Public routes
@@ -48,5 +53,8 @@ router.put('/featured/:id', protect, requireAdmin, auditLog, mongoIdValidator, v
 
 // @route   DELETE /api/content/featured/:id
 router.delete('/featured/:id', protect, requireAdmin, auditLog, mongoIdValidator, validate, removeFeaturedProduct);
+
+// @route   POST /api/content/featured/reorder
+router.post('/featured/reorder', protect, requireAdmin, auditLog, reorderFeatured);
 
 module.exports = router;

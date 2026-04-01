@@ -146,6 +146,65 @@ const adminAPI = {
         return response.data.data;
     },
 
+    // Banners (Content Management)
+    getAllBannersAdmin: async (position = null) => {
+        const endpoint = position ? `/content/banners?position=${position}` : '/content/banners';
+        const response = await client.get(endpoint);
+        return response.data; // Backend returns { success, data: { banners } }
+    },
+
+    createBanner: async (bannerData) => {
+        // bannerData should be FormData for image upload
+        const response = await client.post('/content/banners', bannerData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return response.data;
+    },
+
+    updateBanner: async (id, bannerData) => {
+        const response = await client.put(`/content/banners/${id}`, bannerData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return response.data;
+    },
+
+    deleteBanner: async (id) => {
+        const response = await client.delete(`/content/banners/${id}`);
+        return response.data;
+    },
+
+    reorderBanners: async (data) => {
+        const response = await client.post('/content/banners/reorder', data);
+        return response.data;
+    },
+
+    // Featured Products (Content Management)
+    getAllFeaturedAdmin: async (section = null) => {
+        const endpoint = section ? `/content/featured?section=${section}` : '/content/featured';
+        const response = await client.get(endpoint);
+        return response.data;
+    },
+
+    addFeaturedProduct: async (data) => {
+        const response = await client.post('/content/featured', data);
+        return response.data;
+    },
+
+    updateFeaturedProduct: async (id, data) => {
+        const response = await client.put(`/content/featured/${id}`, data);
+        return response.data;
+    },
+
+    removeFeaturedProduct: async (id) => {
+        const response = await client.delete(`/content/featured/${id}`);
+        return response.data;
+    },
+
+    reorderFeatured: async (data) => {
+        const response = await client.post('/content/featured/reorder', data);
+        return response.data;
+    },
+
     // Global Settings
     getSettings: async () => {
         const response = await client.get('/admin/settings');

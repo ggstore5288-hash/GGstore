@@ -248,6 +248,62 @@ const removeFeaturedProduct = async (req, res, next) => {
     }
 };
 
+/**
+ * @desc    Reorder banners
+ * @route   POST /api/content/banners/reorder
+ * @access  Private/Admin
+ */
+const reorderBanners = async (req, res, next) => {
+    try {
+        const { bannerOrders } = req.body;
+
+        if (!Array.isArray(bannerOrders)) {
+            return next(new AppError('bannerOrders must be an array', HTTP_STATUS.BAD_REQUEST));
+        }
+
+        const updatePromises = bannerOrders.map(order => 
+            Banner.findByIdAndUpdate(order.bannerId, { order: order.order })
+        );
+
+        await Promise.all(updatePromises);
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Banners reordered successfully'
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * @desc    Reorder featured products
+ * @route   POST /api/content/featured/reorder
+ * @access  Private/Admin
+ */
+const reorderFeatured = async (req, res, next) => {
+    try {
+        const { featuredOrders } = req.body;
+
+        if (!Array.isArray(featuredOrders)) {
+            return next(new AppError('featuredOrders must be an array', HTTP_STATUS.BAD_REQUEST));
+        }
+
+        const updatePromises = featuredOrders.map(order => 
+            FeaturedProduct.findByIdAndUpdate(order.featuredId, { order: order.order })
+        );
+
+        await Promise.all(updatePromises);
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Featured products reordered successfully'
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     getBanners,
     createBanner,
@@ -256,5 +312,7 @@ module.exports = {
     getFeaturedProducts,
     addFeaturedProduct,
     updateFeaturedProduct,
-    removeFeaturedProduct
+    removeFeaturedProduct,
+    reorderFeatured,
+    reorderBanners
 };
